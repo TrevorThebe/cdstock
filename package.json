@@ -1,9 +1,11 @@
 {
   "name": "vite_react_shadcn_ts",
+  "homepage": "https://TrevorThebe.github.io/cdstock",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "deploy":"gh-pages -d build",
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
