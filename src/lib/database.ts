@@ -11,7 +11,6 @@ export const databaseService = {
       if (error) throw error;
       return true;
     } catch {
-      // Fallback to localStorage
       const messages = storage.getChatMessages() || [];
       messages.push(message);
       storage.saveChatMessages(messages);
@@ -40,7 +39,6 @@ export const databaseService = {
       }
     } catch {}
     
-    // Fallback to localStorage
     const messages = storage.getChatMessages() || [];
     return messages
       .filter(msg => 
@@ -172,5 +170,39 @@ export const databaseService = {
     } catch {}
     
     return storage.getProducts();
+  },
+
+  // Users
+  async getUsers() {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (!error && data) return data;
+    } catch {}
+    
+    return storage.getUsers();
+  },
+
+  async saveUser(user: any) {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .upsert(user);
+      if (error) throw error;
+      return true;
+    } catch {
+      const users = storage.getUsers();
+      const index = users.findIndex(u => u.id === user.id);
+      if (index >= 0) {
+        users[index] = user;
+      } else {
+        users.push(user);
+      }
+      storage.saveUsers(users);
+      return false;
+    }
   }
 };
