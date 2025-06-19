@@ -11,6 +11,63 @@ import { Send, Bell } from 'lucide-react';
 import React, { useState } from 'react';
 import { notificationService, Notification } from '@/services/notificationService';
 
+interface NotificationSenderProps {
+  currentUser: { id: string; role: string };
+  allUsers: { user_id: string }[];
+}
+
+export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentUser, allUsers }) => {
+  const [title, setTitle] = useState('');
+  const [message, setMessage] = useState('');
+  const [type, setType] = useState<Notification['type']>('info');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  const handleSend = async () => {
+    if (!title.trim() || !message.trim()) {
+      setResult('Please fill in all fields.');
+      return;
+    }
+    setLoading(true);
+    let success = 0;
+    for (const user of allUsers) {
+      const notif: Notification = {
+        user_id: user.user_id,
+        title,
+        message,
+        type,
+        sender_id: currentUser.id,
+        created_at: new Date().toISOString(),
+      };
+      if (await notificationService.sendNotification(notif)) success++;
+    }
+    setResult(`Sent ${success}/${allUsers.length} notifications.`);
+    setLoading(false);
+    setTitle('');
+    setMessage('');
+  };
+
+  if (!['admin', 'super'].includes(currentUser.role)) return <div>Only admins can send notifications.</div>;
+
+  return (
+    <div>
+      <h2>Send Notification</h2>
+      <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
+      <textarea placeholder="Message" value={message} onChange={e => setMessage(e.target.value)} />
+      <select value={type} onChange={e => setType(e.target.value as Notification['type'])}>
+        <option value="info">Info</option>
+        <option value="success">Success</option>
+        <option value="warning">Warning</option>
+        <option value="error">Error</option>
+        <option value="message">Message</option>
+      </select>
+      <button onClick={handleSend} disabled={loading}>{loading ? 'Sending...' : 'Send'}</button>
+      {result && <p>{result}</p>}
+    </div>
+  );
+};
+
+
 export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentUser }) => {
   const [formData, setFormData] = useState({
     title: '',
