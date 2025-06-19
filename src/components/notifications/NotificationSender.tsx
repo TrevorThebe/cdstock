@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Send, Bell } from 'lucide-react';
+import React, { useState } from 'react';
+import { notificationService, Notification } from '@/services/notificationService';
 
 export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentUser }) => {
   const [formData, setFormData] = useState({
