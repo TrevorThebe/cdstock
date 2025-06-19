@@ -11,7 +11,7 @@ import { CreateUsersButton } from '@/components/CreateUsersButton';
 import { NotificationSender } from '@/components/admin/NotificationSender';
 import { NotificationHistory } from '@/components/admin/NotificationHistory';
 import { User } from '@/types';
-import { storage } from '@/lib/storage';
+import { databaseService } from '@/lib/database';
 import { Search, Shield, ShieldCheck, ShieldX, Trash2, UserX, Bell, Users, History } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -28,12 +28,16 @@ export const Admin: React.FC<AdminProps> = ({ currentUser }) => {
     loadUsers();
   }, []);
 
-  const loadUsers = () => {
-    const allUsers = storage.getUsers();
-    setUsers(allUsers);
+  const loadUsers = async () => {
+    try {
+      const allUsers = await databaseService.getUsers();
+      setUsers(allUsers);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
   };
 
-  const handleRoleChange = (userId: string, newRole: 'normal' | 'admin' | 'super') => {
+  const handleRoleChange = async (userId: string, newRole: 'normal' | 'admin' | 'super') => {
     if (userId === currentUser.id && newRole !== 'super') {
       toast({
         title: 'Error',
@@ -43,22 +47,20 @@ export const Admin: React.FC<AdminProps> = ({ currentUser }) => {
       return;
     }
 
-    const updatedUsers = users.map(user => 
-      user.id === userId 
-        ? { ...user, role: newRole, updatedAt: new Date().toISOString() }
-        : user
-    );
-    
-    storage.saveUsers(updatedUsers);
-    setUsers(updatedUsers);
-    
-    toast({
-      title: 'Success',
-      description: `User role updated to ${newRole}`
-    });
+    const updatedUser = users.find(u => u.id === userId);
+    if (updatedUser) {
+      const userToUpdate = { ...updatedUser, role: newRole, updatedAt: new Date().toISOString() };
+      await databaseService.saveUser(userToUpdate);
+      setUsers(prev => prev.map(user => user.id === userId ? userToUpdate : user));
+      
+      toast({
+        title: 'Success',
+        description: `User role updated to ${newRole}`
+      });
+    }
   };
 
-  const handleBlockUser = (userId: string, block: boolean) => {
+  const handleBlockUser = async (userId: string, block: boolean) => {
     if (userId === currentUser.id) {
       toast({
         title: 'Error',
@@ -68,22 +70,20 @@ export const Admin: React.FC<AdminProps> = ({ currentUser }) => {
       return;
     }
 
-    const updatedUsers = users.map(user => 
-      user.id === userId 
-        ? { ...user, isBlocked: block, updatedAt: new Date().toISOString() }
-        : user
-    );
-    
-    storage.saveUsers(updatedUsers);
-    setUsers(updatedUsers);
-    
-    toast({
-      title: 'Success',
-      description: `User ${block ? 'blocked' : 'unblocked'} successfully`
-    });
+    const updatedUser = users.find(u => u.id === userId);
+    if (updatedUser) {
+      const userToUpdate = { ...updatedUser, isBlocked: block, updatedAt: new Date().toISOString() };
+      await databaseService.saveUser(userToUpdate);
+      setUsers(prev => prev.map(user => user.id === userId ? userToUpdate : user));
+      
+      toast({
+        title: 'Success',
+        description: `User ${block ? 'blocked' : 'unblocked'} successfully`
+      });
+    }
   };
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     if (userId === currentUser.id) {
       toast({
         title: 'Error',
@@ -93,9 +93,7 @@ export const Admin: React.FC<AdminProps> = ({ currentUser }) => {
       return;
     }
 
-    const updatedUsers = users.filter(user => user.id !== userId);
-    storage.saveUsers(updatedUsers);
-    setUsers(updatedUsers);
+    setUsers(prev => prev.filter(user => user.id !== userId));
     
     toast({
       title: 'Success',
@@ -187,53 +185,6 @@ export const Admin: React.FC<AdminProps> = ({ currentUser }) => {
           </div>
 
           <CreateUsersButton />
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Shield className="h-5 w-5 text-blue-500" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Users</p>
-                    <p className="text-2xl font-bold">{roleStats.total}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <ShieldCheck className="h-5 w-5 text-red-500" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Super Admins</p>
-                    <p className="text-2xl font-bold">{roleStats.super}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Shield className="h-5 w-5 text-blue-500" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Admins</p>
-                    <p className="text-2xl font-bold">{roleStats.admin}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <UserX className="h-5 w-5 text-red-500" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Blocked</p>
-                    <p className="text-2xl font-bold">{roleStats.blocked}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
 
           <div className="space-y-4">
             {filteredUsers.map(user => (

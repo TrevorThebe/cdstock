@@ -30,6 +30,10 @@ export const Restaurant: React.FC = () => {
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const getTotalValue = (productList: Product[]) => {
+    return productList.reduce((total, product) => total + (product.price * product.quantity), 0).toFixed(2);
+  };
+
   if (loading) {
     return (
       <div className="p-4 lg:p-6 flex items-center justify-center">
@@ -48,9 +52,19 @@ export const Restaurant: React.FC = () => {
         </div>
       </div>
 
+      <Card className="mb-6">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Restaurant Total Value</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-2xl font-bold text-blue-600">${getTotalValue(filteredProducts)}</p>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filteredProducts.map(product => {
           const isLowStock = product.quantity <= product.minQuantity;
+          const totalValue = (product.price * product.quantity).toFixed(2);
           return (
             <Card key={product.id} className={isLowStock ? 'border-red-200 bg-red-50' : ''}>
               <CardHeader>
@@ -70,6 +84,10 @@ export const Restaurant: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Price:</span>
                   <span className="font-medium">${product.price}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Total Value:</span>
+                  <span className="font-medium">${totalValue}</span>
                 </div>
                 {isLowStock && <Badge variant="destructive" className="text-xs">Low Stock</Badge>}
               </CardContent>
