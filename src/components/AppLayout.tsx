@@ -1,7 +1,7 @@
 import React from 'react';
 import { MainApp } from './MainApp';
 
-const AppLayout: React.FC = () => {
+export const AppLayout: React.FC = () => {
   return <MainApp />;
 };
 
