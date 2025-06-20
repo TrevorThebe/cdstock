@@ -73,6 +73,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
     return matchesSearch;
   });
 
+  
   const getTotalValue = (productList: Product[]) => {
     return productList.reduce((total, product) => total + (product.price * product.quantity), 0).toFixed(2);
   };

@@ -80,6 +80,10 @@ export const Restaurant: React.FC = () => {
 
   const lowStockCount = products.filter(p => p.quantity <= p.minQuantity).length;
 
+  const getTotalValue = () => {
+    return products.reduce((total, product) => total + product.quantity * product.price, 0);
+  };
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">

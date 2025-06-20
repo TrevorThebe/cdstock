@@ -62,6 +62,11 @@ export const Bakery: React.FC = () => {
   const lowStockCount = products.filter(p => p.quantity <= p.minQuantity).length;
 
   return (
+    
+    <p className="text-muted-foreground">
+      {products.length} items • {lowStockCount} low stock alerts • Restaurant Value: ${getTotalValue().toFixed(2)}
+    </p>
+
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
