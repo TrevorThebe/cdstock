@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,6 +10,7 @@ import { Product } from '@/types';
 import { storage } from '@/lib/storage';
 import { Search, Edit, Plus, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AddProductDialog } from '@/components/AddProductDialog';
 
 export const Restaurant: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -17,6 +18,7 @@ export const Restaurant: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   useEffect(() => {
     loadProducts();
@@ -54,6 +56,23 @@ export const Restaurant: React.FC = () => {
     });
   };
 
+  const handleAddProduct = (newProduct: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const allProducts = storage.getProducts();
+    const productToAdd: Product = {
+      ...newProduct,
+      id: Date.now().toString(), // Simple unique ID
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      location: 'restaurant', // Ensure location is set
+    };
+    storage.saveProducts([...allProducts, productToAdd]);
+    loadProducts();
+    toast({
+      title: 'Success',
+      description: 'Product added successfully'
+    });
+  };
+
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -79,6 +98,9 @@ export const Restaurant: React.FC = () => {
             className="pl-10"
           />
         </div>
+        <Button onClick={() => setIsAddDialogOpen(true)}> 
+          <Plus className="mr-2 h-4 w-4" /> Add Item
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -149,6 +171,12 @@ export const Restaurant: React.FC = () => {
         onSave={handleSaveProduct}
       />
     </div>
+
+    <AddProductDialog
+      isOpen={isAddDialogOpen}
+      onClose={() => setIsAddDialogOpen(false)}
+      onSave={handleAddProduct}
+    />
   );
 };
 
