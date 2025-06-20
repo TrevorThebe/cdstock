@@ -37,7 +37,10 @@ export const databaseService = {
           is_admin: msg.user_profiles?.role === 'admin'
         }));
       }
-    } catch {}
+    } catch (err) {
+  console.error("Database error in saveProduct:", err);
+  // fallback logic
+}
     
     const messages = storage.getChatMessages() || [];
     return messages
@@ -81,7 +84,10 @@ export const databaseService = {
           is_read: notif.read_notifications?.length > 0
         }));
       }
-    } catch {}
+    } catch (err) {
+  console.error("Database error in saveProduct:", err);
+  // fallback logic
+}
     
     const notifications = storage.getNotifications() || [];
     return notifications.filter(n => n.user_id === userId);
@@ -132,7 +138,10 @@ export const databaseService = {
         .single();
       
       if (!error && data) return data;
-    } catch {}
+    } catch (err) {
+  console.error("Database error in saveProduct:", err);
+  // fallback logic
+}
     
     const users = storage.getUsers();
     return users.find(u => u.id === userId);
@@ -167,7 +176,10 @@ export const databaseService = {
         .order('created_at', { ascending: false });
       
       if (!error && data) return data;
-    } catch {}
+    } catch (err) {
+  console.error("Database error in saveProduct:", err);
+  // fallback logic
+}
     
     return storage.getProducts();
   },
@@ -181,7 +193,10 @@ export const databaseService = {
         .order('created_at', { ascending: false });
       
       if (!error && data) return data;
-    } catch {}
+    } catch (err) {
+  console.error("Database error in saveProduct:", err);
+  // fallback logic
+}
     
     return storage.getUsers();
   },
