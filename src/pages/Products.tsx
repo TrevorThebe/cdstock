@@ -36,7 +36,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
   };
 
   const handleDeleteProduct = async (productId: string) => {
-    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super')) {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super' && currentUser.role !== 'normal')) {
       toast({ title: 'Error', description: 'Only admins can delete products', variant: 'destructive' });
       return;
     }
