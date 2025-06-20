@@ -34,7 +34,7 @@ export const Dashboard: React.FC = () => {
     });
   };
 
-  const lowStockProducts = products.filter(p => p.quantity <= p.minQuantity);
+  const lowStockProducts = products.filter((p: Product) => p.quantity <= p.minQuantity);
 
   return (
     <div className="p-6 space-y-6">
@@ -99,7 +99,7 @@ export const Dashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {lowStockProducts.slice(0, 5).map((product) => (
+              {lowStockProducts.slice(0, 5).map((product: Product) => (
                 <div key={product.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
                   <div>
                     <h4 className="font-medium">{product.name}</h4>
@@ -107,7 +107,7 @@ export const Dashboard: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <Badge variant="destructive">
-                      {product.quantity} left
+                      {`${product.quantity} left`}
                     </Badge>
                     <p className="text-xs text-gray-500 mt-1">
                       Min: {product.minQuantity}
