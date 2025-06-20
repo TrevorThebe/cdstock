@@ -52,7 +52,7 @@ export const Dashboard: React.FC = () => {
     <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          CD Stock Dashboard
+          CD Stock Dashboard on
         </h1>
         {currentUser && (
           <div className="flex items-center gap-3">
