@@ -17,7 +17,7 @@ interface AddProductProps {
 
 export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSaved }) => {
   const [formData, setFormData] = useState({
-    id: '', // <-- Add id field!
+    id: '',
     name: '',
     description: '',
     quantity: '',
@@ -31,7 +31,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
   useEffect(() => {
     if (editProduct) {
       setFormData({
-        id: editProduct.id, // <-- CRUCIAL
+        id: editProduct.id,
         name: editProduct.name,
         description: editProduct.description,
         quantity: editProduct.quantity.toString(),
@@ -61,22 +61,27 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
     e.preventDefault();
     setIsLoading(true);
     try {
-      const productData = {
-        id: formData.id || uuidv4(), // <-- Always include id!
+      const productData: Product = {
+        id: formData.id || uuidv4(), // Use existing id for edit, new for add
         name: formData.name,
         description: formData.description,
         quantity: Number(formData.quantity),
         minQuantity: Number(formData.minQuantity),
         price: Number(formData.price),
         location: formData.location,
+        createdAt: editProduct?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
-      await databaseService.saveProduct(productData);
-      toast({ title: 'Success', description: `Product ${editProduct ? 'updated' : 'added'} successfully` });
-      onProductSaved();
+      const result = await databaseService.saveProduct(productData);
+      if (result) {
+        toast({ title: 'Success', description: `Product ${editProduct ? 'updated' : 'added'} successfully` });
+        onProductSaved();
+      } else {
+        toast({ title: 'Error', description: 'Failed to save product', variant: 'destructive' });
+      }
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to save product', variant: 'destructive' });
+      toast({ title: 'Error', description: 'An error occurred', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
