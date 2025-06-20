@@ -17,6 +17,7 @@ interface AddProductProps {
 
 export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSaved }) => {
   const [formData, setFormData] = useState({
+    id: '', // <-- Add id field!
     name: '',
     description: '',
     quantity: '',
@@ -30,6 +31,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
   useEffect(() => {
     if (editProduct) {
       setFormData({
+        id: editProduct.id, // <-- CRUCIAL
         name: editProduct.name,
         description: editProduct.description,
         quantity: editProduct.quantity.toString(),
@@ -37,27 +39,36 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
         price: editProduct.price.toString(),
         location: editProduct.location
       });
+    } else {
+      setFormData({
+        id: '',
+        name: '',
+        description: '',
+        quantity: '',
+        minQuantity: '',
+        price: '',
+        location: 'restaurant'
+      });
     }
   }, [editProduct]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
-      const productData: Product = {
-        id: editProduct?.id || uuidv4(),
+      const productData = {
+        id: formData.id || uuidv4(), // <-- Always include id!
         name: formData.name,
         description: formData.description,
-        quantity: parseInt(formData.quantity),
-        minQuantity: parseInt(formData.minQuantity),
-        price: parseFloat(formData.price),
+        quantity: Number(formData.quantity),
+        minQuantity: Number(formData.minQuantity),
+        price: Number(formData.price),
         location: formData.location,
-        createdAt: editProduct?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
@@ -85,9 +96,9 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
             </div>
             <div>
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" name="description" value={formData.description} onChange={handleInputChange} />
+              <Textarea id="description" name="description" value={formData.description} onChange={handleInputChange} required />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex gap-4">
               <div>
                 <Label htmlFor="quantity">Quantity</Label>
                 <Input id="quantity" name="quantity" type="number" value={formData.quantity} onChange={handleInputChange} required />
@@ -96,10 +107,10 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
                 <Label htmlFor="minQuantity">Min Quantity</Label>
                 <Input id="minQuantity" name="minQuantity" type="number" value={formData.minQuantity} onChange={handleInputChange} required />
               </div>
-            </div>
-            <div>
-              <Label htmlFor="price">Price</Label>
-              <Input id="price" name="price" type="number" step="0.01" value={formData.price} onChange={handleInputChange} required />
+              <div>
+                <Label htmlFor="price">Price</Label>
+                <Input id="price" name="price" type="number" value={formData.price} onChange={handleInputChange} required />
+              </div>
             </div>
             <div>
               <Label htmlFor="location">Location</Label>
