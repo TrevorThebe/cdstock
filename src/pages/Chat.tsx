@@ -63,8 +63,9 @@ export const Chat: React.FC = () => {
     }
   };
 
-  console.log("Sending message:", messageData);
-  await databaseService.saveChatMessage(messageData);
+  console.log('About to send:', messageData);
+  const result = await databaseService.saveChatMessage(messageData);
+  console.log('Save result:', result);
   
   const sendMessage = async () => {
     if (!newMessage.trim() || !currentUser || !selectedUserId) return;
