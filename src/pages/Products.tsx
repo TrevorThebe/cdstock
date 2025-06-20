@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Product } from '@/types';
-import { Search, Edit, Trash2, AlertTriangle } from 'lucide-react';
+import { Search, Edit, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { databaseService } from '@/lib/database';
 
@@ -17,6 +17,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -24,11 +25,15 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
   }, []);
 
   const loadProducts = async () => {
+    setLoading(true);
     try {
       const allProducts = await databaseService.getProducts();
       setProducts(allProducts);
     } catch (error) {
       console.error('Error loading products:', error);
+      toast({ title: 'Error', description: 'Failed to load products.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,6 +102,17 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
       </Card>
     );
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <div className="flex items-center text-muted-foreground">
+          <Loader2 className="h-6 w-6 animate-spin mr-2" />
+          <span>Loading Products...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 lg:p-6">
