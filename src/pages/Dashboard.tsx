@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { storage } from '@/lib/storage';
+import { supabase } from '@/lib/supabase';
 import { Product } from '@/types';
-import { Package, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import { Package, AlertTriangle, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export const Dashboard: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -13,28 +14,64 @@ export const Dashboard: React.FC = () => {
     restaurantItems: 0,
     bakeryItems: 0
   });
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = () => {
-    const allProducts = storage.getProducts();
-    setProducts(allProducts);
-    
-    const lowStock = allProducts.filter(p => p.quantity <= p.minQuantity);
-    const restaurant = allProducts.filter(p => p.location === 'restaurant');
-    const bakery = allProducts.filter(p => p.location === 'bakery');
-    
-    setStats({
-      totalProducts: allProducts.length,
-      lowStockItems: lowStock.length,
-      restaurantItems: restaurant.length,
-      bakeryItems: bakery.length
-    });
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const { data: allProducts, error } = await supabase
+        .from('products') // Assuming your table is named 'products'
+        .select('*');
+
+      if (error) throw error;
+
+      if (allProducts) {
+        setProducts(allProducts);
+
+        const lowStock = allProducts.filter(p => p.quantity <= p.minQuantity);
+        const restaurant = allProducts.filter(p => p.location === 'restaurant');
+        const bakery = allProducts.filter(p => p.location === 'bakery');
+
+        setStats({
+          totalProducts: allProducts.length,
+          lowStockItems: lowStock.length,
+          restaurantItems: restaurant.length,
+          bakeryItems: bakery.length
+        });
+      }
+    } catch (error: any) {
+      console.error("Error loading dashboard data:", error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to load dashboard data.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const lowStockProducts = products.filter((p: Product) => p.quantity <= p.minQuantity);
+  // useMemo prevents this expensive filtering operation from running on every single render.
+  // It will only re-calculate when the `products` state changes.
+  const lowStockProducts = useMemo(() => {
+    return products.filter((p: Product) => p.quantity <= p.minQuantity);
+  }, [products]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="flex items-center text-muted-foreground">
+          <Loader2 className="h-6 w-6 animate-spin mr-2" />
+          <span>Loading Dashboard...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
