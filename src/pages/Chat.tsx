@@ -63,10 +63,6 @@ export const Chat: React.FC = () => {
     }
   };
 
-  console.log('About to send:', messageData);
-  const result = await databaseService.saveChatMessage(messageData);
-  console.log('Save result:', result);
-  
   const sendMessage = async () => {
     if (!newMessage.trim() || !currentUser || !selectedUserId) return;
 
@@ -81,21 +77,6 @@ export const Chat: React.FC = () => {
       };
 
       await databaseService.saveChatMessage(messageData);
-      
-      // Send notification to recipient if current user is admin/super
-      if (currentUser.role === 'admin' || currentUser.role === 'super') {
-        const notificationData = {
-          id: Math.random().toString(36).substr(2, 9),
-          user_id: selectedUserId,
-          title: `New message from ${currentUser.name}`,
-          message: newMessage.trim(),
-          type: 'message',
-          priority: 'medium',
-          created_at: new Date().toISOString()
-        };
-        await databaseService.saveNotification(notificationData);
-      }
-      
       setNewMessage('');
       loadMessages();
     } catch (error) {

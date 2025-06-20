@@ -4,25 +4,20 @@ import { storage } from './storage';
 export const databaseService = {
   // Chat Messages
   async saveChatMessage(message: any) {
-  try {
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .insert(message);
-
-    console.log('Supabase insert result:', data);
-    if (error) {
-      console.error('Supabase insert error:', error);
-      throw error;
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert(message);
+      if (error) throw error;
+      return true;
+    } catch {
+      // Fallback to localStorage
+      const messages = storage.getChatMessages() || [];
+      messages.push(message);
+      storage.saveChatMessages(messages);
+      return false;
     }
-    return true;
-  } catch (err) {
-    console.error('Failed to save chat message:', err);
-    const messages = storage.getChatMessages() || [];
-    messages.push(message);
-    storage.saveChatMessages(messages);
-    return false;
-  }
-},
+  },
 
   async getChatMessages(userId: string, recipientId: string) {
     try {
@@ -43,11 +38,9 @@ export const databaseService = {
           is_admin: msg.user_profiles?.role === 'admin'
         }));
       }
-    } catch (err) {
-  console.error("Database error in saveProduct:", err);
-  // fallback logic
-}
+    } catch {}
     
+    // Fallback to localStorage
     const messages = storage.getChatMessages() || [];
     return messages
       .filter(msg => 
@@ -90,10 +83,7 @@ export const databaseService = {
           is_read: notif.read_notifications?.length > 0
         }));
       }
-    } catch (err) {
-  console.error("Database error in saveProduct:", err);
-  // fallback logic
-}
+    } catch {}
     
     const notifications = storage.getNotifications() || [];
     return notifications.filter(n => n.user_id === userId);
@@ -144,10 +134,7 @@ export const databaseService = {
         .single();
       
       if (!error && data) return data;
-    } catch (err) {
-  console.error("Database error in saveProduct:", err);
-  // fallback logic
-}
+    } catch {}
     
     const users = storage.getUsers();
     return users.find(u => u.id === userId);
@@ -180,50 +167,10 @@ export const databaseService = {
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
-      console.log('Supabase products:', data, 'Error:', error);
-      if (!error && data) return data;
-    } catch (err) {
-  console.error("Database error in saveProduct:", err);
-  // fallback logic
-}
-    
-    return storage.getProducts();
-  },
-
-  // Users
-  async getUsers() {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
       
       if (!error && data) return data;
-    } catch (err) {
-  console.error("Database error in saveProduct:", err);
-  // fallback logic
-}
+    } catch {}
     
-    return storage.getUsers();
-  },
-
-  async saveUser(user: any) {
-    try {
-      const { error } = await supabase
-        .from('users')
-        .upsert(user);
-      if (error) throw error;
-      return true;
-    } catch {
-      const users = storage.getUsers();
-      const index = users.findIndex(u => u.id === user.id);
-      if (index >= 0) {
-        users[index] = user;
-      } else {
-        users.push(user);
-      }
-      storage.saveUsers(users);
-      return false;
-    }
+    return storage.getProducts();
   }
 };

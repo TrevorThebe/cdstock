@@ -13,7 +13,7 @@ import { Chat } from '@/pages/Chat';
 import { UserManagement } from '@/pages/UserManagement';
 import { UpdatePassword } from '@/pages/UpdatePassword';
 import { authService } from '@/lib/auth';
-import { databaseService } from '@/lib/database';
+import { storage } from '@/lib/storage';
 import { User, Product } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { Toaster } from '@/components/ui/toaster';
@@ -30,67 +30,60 @@ export const MainApp: React.FC = () => {
     initializeApp();
   }, []);
 
-  const initializeApp = async () => {
-    try {
-      const users = await databaseService.getUsers();
-      
-      if (users.length === 0) {
-        const superUser: User = {
+  const initializeApp = () => {
+    const users = storage.getUsers();
+    const products = storage.getProducts();
+    
+    if (users.length === 0) {
+      const superUser: User = {
+        id: uuidv4(),
+        email: 'strevor@uwiniwin.co.za',
+        name: 'Trevor Super',
+        phone: '+27123456789',
+        role: 'super',
+        isBlocked: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      const adminUser: User = {
+        id: uuidv4(),
+        email: 'cosmodumpling1@gmail.com',
+        name: 'Admin User',
+        phone: '+1234567890',
+        role: 'admin',
+        isBlocked: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      storage.saveUsers([superUser, adminUser]);
+    }
+    
+    if (products.length === 0) {
+      const sampleProducts: Product[] = [
+        ...Array.from({ length: 10 }, (_, i) => ({
           id: uuidv4(),
-          email: 'strevor@uwiniwin.co.za',
-          name: 'Trevor Super',
-          phone: '+27123456789',
-          role: 'super',
-          isBlocked: false,
+          name: `Restaurant Item ${i + 1}`,
+          description: `Description for restaurant item ${i + 1}`,
+          quantity: Math.floor(Math.random() * 20) + 1,
+          minQuantity: 3,
+          price: Math.floor(Math.random() * 50) + 10,
+          location: 'restaurant' as const,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
-        };
-        const adminUser: User = {
+        })),
+        ...Array.from({ length: 10 }, (_, i) => ({
           id: uuidv4(),
-          email: 'cosmodumpling1@gmail.com',
-          name: 'Admin User',
-          phone: '+1234567890',
-          role: 'admin',
-          isBlocked: false,
+          name: `Bakery Item ${i + 1}`,
+          description: `Description for bakery item ${i + 1}`,
+          quantity: Math.floor(Math.random() * 20) + 1,
+          minQuantity: 3,
+          price: Math.floor(Math.random() * 30) + 5,
+          location: 'bakery' as const,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
-        };
-        await databaseService.saveUser(superUser);
-        await databaseService.saveUser(adminUser);
-      }
-      
-      const products = await databaseService.getProducts();
-      if (products.length === 0) {
-        const sampleProducts: Product[] = [
-          ...Array.from({ length: 10 }, (_, i) => ({
-            id: uuidv4(),
-            name: `Restaurant Item ${i + 1}`,
-            description: `Description for restaurant item ${i + 1}`,
-            quantity: Math.floor(Math.random() * 20) + 1,
-            minQuantity: 3,
-            price: Math.floor(Math.random() * 50) + 10,
-            location: 'restaurant' as const,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          })),
-          ...Array.from({ length: 10 }, (_, i) => ({
-            id: uuidv4(),
-            name: `Bakery Item ${i + 1}`,
-            description: `Description for bakery item ${i + 1}`,
-            quantity: Math.floor(Math.random() * 20) + 1,
-            minQuantity: 3,
-            price: Math.floor(Math.random() * 30) + 5,
-            location: 'bakery' as const,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }))
-        ];
-        for (const product of sampleProducts) {
-          await databaseService.saveProduct(product);
-        }
-      }
-    } catch (error) {
-      console.error('Error initializing app:', error);
+        }))
+      ];
+      storage.saveProducts(sampleProducts);
     }
     
     const user = authService.getCurrentUser();
@@ -174,6 +167,7 @@ export const MainApp: React.FC = () => {
   return (
     <>
       <div className="flex h-screen bg-gray-50">
+        {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div 
             className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
@@ -181,6 +175,7 @@ export const MainApp: React.FC = () => {
           />
         )}
         
+        {/* Sidebar */}
         <div className={`
           fixed lg:static inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
@@ -196,7 +191,9 @@ export const MainApp: React.FC = () => {
           />
         </div>
         
+        {/* Main content */}
         <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Mobile header */}
           <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -205,9 +202,10 @@ export const MainApp: React.FC = () => {
               <Menu className="h-6 w-6" />
             </button>
             <h1 className="text-lg font-semibold text-gray-900">CD Stock</h1>
-            <div className="w-10" />
+            <div className="w-10" /> {/* Spacer */}
           </div>
           
+          {/* Page content */}
           <div className="flex-1 overflow-auto">
             {renderActiveView()}
           </div>

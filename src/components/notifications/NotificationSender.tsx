@@ -10,37 +10,27 @@ import { useToast } from '@/hooks/use-toast';
 import { Send, Bell } from 'lucide-react';
 
 interface NotificationSenderProps {
-  currentUser: { id: string; profile?: { role: string } };
+  currentUser?: any;
 }
 
-type UserProfile = {
-  user_id: string;
-};
-
 export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentUser }) => {
-  const [formData, setFormData] = useState<{
-    title: string;
-    message: string;
-    type: 'info' | 'warning' | 'success' | 'error';
-  }>({
+  const [formData, setFormData] = useState({
     title: '',
     message: '',
-    type: 'info'
+    type: 'info' as 'info' | 'warning' | 'success' | 'error'
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData((prev: typeof formData) => ({
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
   };
 
   const handleTypeChange = (value: string) => {
-    setFormData((prev: typeof formData) => ({
+    setFormData(prev => ({
       ...prev,
       type: value as 'info' | 'warning' | 'success' | 'error'
     }));
@@ -62,23 +52,19 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
       // Get all users except the sender
       const { data: users, error: usersError } = await supabase
         .from('user_profiles')
-        .select('user_id');
+        .select('user_id')
+        .neq('user_id', currentUser?.id);
 
       if (usersError) throw usersError;
 
-      // Filter out the sender
-      const filteredUsers = (users as UserProfile[]).filter(
-        (user: UserProfile) => user.user_id !== currentUser?.id
-      );
-
       // Create notifications for all users
-      const notifications = filteredUsers.map((user: UserProfile) => ({
+      const notifications = users?.map(user => ({
         user_id: user.user_id,
         title: formData.title,
         message: formData.message,
         type: formData.type,
         sender_id: currentUser?.id
-      }));
+      })) || [];
 
       const { error } = await supabase
         .from('notifications')
@@ -90,7 +76,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
         title: 'Success',
         description: `Notification sent to ${notifications.length} users`
       });
-
+      
       setFormData({
         title: '',
         message: '',
@@ -107,18 +93,14 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
     }
   };
 
-  const isAdmin =
-    currentUser?.profile?.role === 'admin' ||
-    currentUser?.profile?.role === 'super';
+  const isAdmin = currentUser?.profile?.role === 'admin' || currentUser?.profile?.role === 'super';
 
   if (!isAdmin) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
           <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground">
-            Only admins can send notifications to all users
-          </p>
+          <p className="text-muted-foreground">Only admins can send notifications to all users</p>
         </CardContent>
       </Card>
     );
@@ -145,7 +127,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
               required
             />
           </div>
-
+          
           <div>
             <Label htmlFor="message">Message</Label>
             <Textarea
@@ -158,7 +140,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
               required
             />
           </div>
-
+          
           <div>
             <Label htmlFor="type">Type</Label>
             <Select value={formData.type} onValueChange={handleTypeChange}>
@@ -173,7 +155,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
               </SelectContent>
             </Select>
           </div>
-
+          
           <Button type="submit" disabled={isLoading} className="w-full">
             {isLoading ? 'Sending...' : 'Send to All Users'}
             <Send className="ml-2 h-4 w-4" />
@@ -183,6 +165,3 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
     </Card>
   );
 };
-
-
-
