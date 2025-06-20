@@ -4,19 +4,25 @@ import { storage } from './storage';
 export const databaseService = {
   // Chat Messages
   async saveChatMessage(message: any) {
-    try {
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert(message);
-      if (error) throw error;
-      return true;
-    } catch {
-      const messages = storage.getChatMessages() || [];
-      messages.push(message);
-      storage.saveChatMessages(messages);
-      return false;
+  try {
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .insert(message);
+
+    console.log('Supabase insert result:', data);
+    if (error) {
+      console.error('Supabase insert error:', error);
+      throw error;
     }
-  },
+    return true;
+  } catch (err) {
+    console.error('Failed to save chat message:', err);
+    const messages = storage.getChatMessages() || [];
+    messages.push(message);
+    storage.saveChatMessages(messages);
+    return false;
+  }
+},
 
   async getChatMessages(userId: string, recipientId: string) {
     try {
