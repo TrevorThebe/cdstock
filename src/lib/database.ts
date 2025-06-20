@@ -180,7 +180,7 @@ export const databaseService = {
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
-      
+      console.log('Supabase products:', data, 'Error:', error);
       if (!error && data) return data;
     } catch (err) {
   console.error("Database error in saveProduct:", err);
