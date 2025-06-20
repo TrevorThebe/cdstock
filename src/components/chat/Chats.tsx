@@ -1,15 +1,17 @@
 import React, { useEffect } from 'react';
 import { syncLocalChats } from '@/lib/syncLocalChats';
 
-// ...your other imports and code...
+// ...component code...
 
-export const Chat: React.FC = () => {
-  // ...existing state and functions...
+useEffect(() => {
+  // Sync on mount
+  syncLocalChats();
 
-  useEffect(() => {
-    // Try to sync on mount
-    syncLocalChats();
-  }, []);
+  // Sync when coming online
+  const handleOnline = () => syncLocalChats();
+  window.addEventListener('online', handleOnline);
 
-  // ...rest of your component...
-};
+  return () => {
+    window.removeEventListener('online', handleOnline);
+  };
+}, []);
