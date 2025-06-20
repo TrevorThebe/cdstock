@@ -210,7 +210,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
 
       {filteredProducts.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No products found matching your criteria. TTTTT</p>
+          <p className="text-muted-foreground">No products found matching your criteria.</p>
         </div>
       )}
     </div>
