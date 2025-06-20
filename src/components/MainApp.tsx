@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthPage } from './auth/AuthPage';
-import { Dashboard } from '@/components/dashboard/Dashboard';
+import { Dashboard } from './dashboard/Dashboard';
 import { Sidebar } from './layout/Sidebar';
 import { Profile } from '@/pages/Profile';
 import { Products } from '@/pages/Products';
@@ -11,7 +11,6 @@ import { Bakery } from '@/pages/Bakery';
 import { Admin } from '@/pages/Admin';
 import { Chat } from '@/pages/Chat';
 import { UserManagement } from '@/pages/UserManagement';
-import { UpdatePassword } from '@/pages/UpdatePassword';
 import { authService } from '@/lib/auth';
 import { storage } from '@/lib/storage';
 import { User, Product } from '@/types';
@@ -35,27 +34,17 @@ export const MainApp: React.FC = () => {
     const products = storage.getProducts();
     
     if (users.length === 0) {
-      const superUser: User = {
+      const adminUser: User = {
         id: uuidv4(),
-        email: 'strevor@uwiniwin.co.za',
-        name: 'Trevor Super',
-        phone: '+27123456789',
+        email: 'admin@cdstock.com',
+        name: 'Admin User',
+        phone: '+1234567890',
         role: 'super',
         isBlocked: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      const adminUser: User = {
-        id: uuidv4(),
-        email: 'cosmodumpling1@gmail.com',
-        name: 'Admin User',
-        phone: '+1234567890',
-        role: 'admin',
-        isBlocked: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      storage.saveUsers([superUser, adminUser]);
+      storage.saveUsers([adminUser]);
     }
     
     if (products.length === 0) {
@@ -122,8 +111,6 @@ export const MainApp: React.FC = () => {
     switch (activeView) {
       case 'profile':
         return <Profile currentUser={currentUser} onUserUpdate={handleUserUpdate} />;
-      case 'update-password':
-        return <UpdatePassword />;
       case 'products':
         return <Products onEditProduct={handleEditProduct} />;
       case 'add-product':

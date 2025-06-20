@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/lib/supabase';
 import {
   Home,
   Package,
@@ -14,8 +12,7 @@ import {
   Bell,
   ChefHat,
   Coffee,
-  MessageCircle,
-  Lock
+  MessageCircle
 } from 'lucide-react';
 import { User } from '@/types';
 
@@ -34,37 +31,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onLogout,
   className
 }) => {
-  const [notificationCount, setNotificationCount] = useState(0);
-
-  useEffect(() => {
-    if (currentUser) {
-      loadNotificationCount();
-      const interval = setInterval(loadNotificationCount, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [currentUser]);
-
-  const loadNotificationCount = async () => {
-    if (!currentUser) return;
-    try {
-      const { data: notifications } = await supabase
-        .from('notifications')
-        .select('id')
-        .eq('user_id', currentUser.id);
-      
-      const { data: readNotifications } = await supabase
-        .from('read_notifications')
-        .select('notification_id')
-        .eq('user_id', currentUser.id);
-      
-      const readIds = readNotifications?.map(r => r.notification_id) || [];
-      const unreadCount = (notifications || []).filter(n => !readIds.includes(n.id)).length;
-      setNotificationCount(unreadCount);
-    } catch (error) {
-      console.error('Error loading notification count:', error);
-    }
-  };
-
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'products', label: 'All Products', icon: Package },
@@ -72,9 +38,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'bakery', label: 'Bakery', icon: Coffee },
     { id: 'add-product', label: 'Add Product', icon: Plus },
     { id: 'chat', label: 'Chat', icon: MessageCircle },
-    { id: 'notifications', label: 'Notifications', icon: Bell, badge: notificationCount },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'profile', label: 'Profile', icon: Settings },
-    { id: 'update-password', label: 'Update Password', icon: Lock },
   ];
 
   const adminItems = [
@@ -99,16 +64,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <Button
               key={item.id}
               variant={activeView === item.id ? 'default' : 'ghost'}
-              className="w-full justify-start text-sm lg:text-base h-10 lg:h-11 relative"
+              className="w-full justify-start text-sm lg:text-base h-10 lg:h-11"
               onClick={() => onViewChange(item.id)}
             >
               <Icon className="mr-2 h-4 w-4 flex-shrink-0" />
               <span className="truncate">{item.label}</span>
-              {item.badge && item.badge > 0 && (
-                <Badge className="ml-auto h-5 w-5 p-0 text-xs flex items-center justify-center">
-                  {item.badge}
-                </Badge>
-              )}
             </Button>
           );
         })}
