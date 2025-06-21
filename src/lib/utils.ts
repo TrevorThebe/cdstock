@@ -3,6 +3,13 @@ import { twMerge } from "tailwind-merge"
 import { storage } from '@/lib/storage';
 import { Product } from '@/types';
 
+  storage.saveProducts(products);
+  return true;
+}
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
 /**
  * Updates a product in local storage by its id.
  * @param productId The id of the product to update.
@@ -20,10 +27,3 @@ export function updateLocalProduct(productId: string, updatedFields: Partial<Pro
     ...updatedFields,
     updatedAt: new Date().toISOString()
   };
-
-  storage.saveProducts(products);
-  return true;
-}
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
