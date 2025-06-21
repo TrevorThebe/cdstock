@@ -8,7 +8,11 @@ import { Product } from '@/types';
 import { storage } from '@/lib/storage';
 import { Search, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-   
+import React, { useState } from 'react';
+import { useProducts } from '../hooks/useProducts';
+
+
+
 interface ProductsProps {
   onEditProduct: (product: Product) => void;
 }
