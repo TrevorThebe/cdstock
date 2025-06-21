@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { storage } from './storage';
+import { databaseService } from '@/lib/database';
 
 export const databaseService = {
   // Chat Messages
@@ -149,6 +150,12 @@ export const databaseService = {
       if (error) throw error;
       return true;
     } catch {
+      const result = await databaseService.saveProduct(productData);
+      if (result) {
+        toast({ title: "Success", description: "Product saved to server!" });
+      } else {
+        toast({ title: "Warning", description: "Saved locally. Server not updated." });
+      }
       const products = storage.getProducts();
       const index = products.findIndex(p => p.id === product.id);
       if (index >= 0) {
