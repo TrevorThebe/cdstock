@@ -11,7 +11,43 @@ import { useToast } from '@/hooks/use-toast';
 import React, { useState } from 'react';
 import { useProducts } from '../hooks/useProducts';
 
+const api = {
+  fetchProducts: () => fetch('/api/products').then(r => r.json()),
+  saveProduct: (product: any) =>
+    fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(product),
+    }),
+};
 
+export default function Products() {
+  const { products, saveProduct } = useProducts(api);
+  const [name, setName] = useState('');
+
+  const handleAdd = async () => {
+    const newProduct = { id: Date.now(), name };
+    await saveProduct(newProduct);
+    setName('');
+  };
+
+  return (
+    <div>
+      <h1>Products</h1>
+      <input
+        value={name}
+        onChange={e => setName(e.target.value)}
+        placeholder="Product name"
+      />
+      <button onClick={handleAdd}>Add Product</button>
+      <ul>
+        {products.map(p => (
+          <li key={p.id}>{p.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 interface ProductsProps {
   onEditProduct: (product: Product) => void;
