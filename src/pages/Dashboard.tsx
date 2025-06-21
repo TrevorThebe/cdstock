@@ -67,90 +67,26 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  // useMemo prevents this expensive filtering operation from running on every single render.
-  // It will only re-calculate when the `products` state changes.
-  const lowStockProducts = useMemo(() => {
-    return products.filter((p: Product) => p.quantity <= p.minQuantity);
-  }, [products]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="flex items-center text-muted-foreground">
-          <Loader2 className="h-6 w-6 animate-spin mr-2" />
-          <span>Loading Dashboard...</span>
-        </div>
-      </div>
-    );
-  }
-// After fetching allProducts:
-const locationCounts = allProducts.reduce((acc, product) => {
-  const loc = (product.location || 'Unknown').toLowerCase();
-  acc[loc] = (acc[loc] || 0) + 1;
-  return acc;
-}, {} as Record<string, number>);
-
-// ...existing imports...
-
-export const Dashboard: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const { data: allProducts, error } = await supabase
-        .from('products')
-        .select('*');
-      if (error) throw error;
-      if (allProducts) setProducts(allProducts);
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to load dashboard data.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Dynamic location counts
-  const locationCounts = useMemo(() => {
-    return products.reduce((acc, product) => {
-      const loc = (product.location || 'Unknown').toLowerCase();
-      acc[loc] = (acc[loc] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-  }, [products]);
-
-  const lowStockProducts = useMemo(() => {
-    return products.filter((p: Product) => p.quantity <= p.minQuantity);
-  }, [products]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="flex items-center text-muted-foreground">
-          <Loader2 className="h-6 w-6 animate-spin mr-2" />
-          <span>Loading Dashboard...</span>
-        </div>
-      </div>
-    );
-  }
-
+  
+// Example result: { restaurant: 12, bakery: 7, bar: 2 }
   return (
+    {Object.entries(locationCounts).map(([location, count]) => (
+  <Card key={location}>
+    <CardHeader>
+      <CardTitle>{location.charAt(0).toUpperCase() + location.slice(1)} Items</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold">{count}</div>
+    </CardContent>
+  </Card>
+))}
+    <div>Total: {total}</div>
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
       </div>
 
-      {/* Dynamic Location Cards */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -158,31 +94,39 @@ export const Dashboard: React.FC = () => {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
+            <div className="text-2xl font-bold">{stats.totalProducts}</div>
           </CardContent>
         </Card>
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{lowStockProducts.length}</div>
+            <div className="text-2xl font-bold text-red-600">{stats.lowStockItems}</div>
           </CardContent>
         </Card>
-        {Object.entries(locationCounts).map(([location, count]) => (
-          <Card key={location}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {location.charAt(0).toUpperCase() + location.slice(1)} Items
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{count}</div>
-            </CardContent>
-          </Card>
-        ))}
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Restaurant Items</CardTitle>
+            <TrendingUp className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.restaurantItems}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Bakery Items</CardTitle>
+            <TrendingDown className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.bakeryItems}</div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Low Stock Alert */}
@@ -222,6 +166,7 @@ export const Dashboard: React.FC = () => {
     </div>
   );
 };
-// ...existing code...
+
+
       
       
