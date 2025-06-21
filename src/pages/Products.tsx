@@ -9,7 +9,7 @@ import { storage } from '@/lib/storage';
 import { Search, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-/*test start*/
+
 import { databaseService } from '@/lib/database';
 
 const result = await databaseService.saveProduct(productData);
@@ -18,7 +18,11 @@ if (result) {
 } else {
   toast({ title: "Warning", description: "Saved locally. Server not updated." });
 }
-/*test end*/
+
+
+
+
+
 
 interface ProductsProps {
   onEditProduct: (product: Product) => void;
