@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import React, { useState } from 'react';
 import { useProducts } from '../hooks/useProducts';
 
+
+const total = products?.reduce((sum, item) => sum + (item.total || 0), 0);
 const api = {
   fetchProducts: () => fetch('/api/products').then(r => r.json()),
   saveProduct: (product: any) =>
