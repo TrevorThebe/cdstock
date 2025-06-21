@@ -8,6 +8,12 @@ import { useToast } from '@/hooks/use-toast';
 
 const total = products?.reduce((sum, item) => sum + (item.total || 0), 0);
 
+const bakery = allProducts.filter(p => p.location?.toLowerCase() === 'bakery');
+setStats({
+  // ...other stats
+  bakeryItems: bakery.length
+});
+
 export const Dashboard: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [stats, setStats] = useState({
@@ -76,6 +82,7 @@ export const Dashboard: React.FC = () => {
   }
 
   return (
+    <div className="text-2xl font-bold">{stats.bakeryItems}</div>
     <div>Total: {total}</div>
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -91,7 +98,6 @@ export const Dashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalProducts}</div>
-            <div>Total: {total}</div>
           </CardContent>
         </Card>
         
