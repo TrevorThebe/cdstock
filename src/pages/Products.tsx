@@ -9,20 +9,7 @@ import { storage } from '@/lib/storage';
 import { Search, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-
 import { databaseService } from '@/lib/database';
-
-const result = await databaseService.saveProduct(productData);
-if (result) {
-  toast({ title: "Success", description: "Product saved to server!" });
-} else {
-  toast({ title: "Warning", description: "Saved locally. Server not updated." });
-}
-
-
-
-
-
 
 interface ProductsProps {
   onEditProduct: (product: Product) => void;
@@ -54,6 +41,15 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
   };
 
   const filteredProducts = products.filter(product => {
+
+    const result = await databaseService.saveProduct(productData);
+    if (result) {
+      toast({ title: "Success", description: "Product saved to server!" });
+    } else {
+      toast({ title: "Warning", description: "Saved locally. Server not updated." });
+    }
+
+    
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
     
