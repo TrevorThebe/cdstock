@@ -80,9 +80,25 @@ export const Dashboard: React.FC = () => {
       </div>
     );
   }
+// After fetching allProducts:
+const locationCounts = allProducts.reduce((acc, product) => {
+  const loc = (product.location || 'Unknown').toLowerCase();
+  acc[loc] = (acc[loc] || 0) + 1;
+  return acc;
+}, {} as Record<string, number>);
 
+// Example result: { restaurant: 12, bakery: 7, bar: 2 }
   return (
-    <div className="text-2xl font-bold">{stats.bakeryItems}</div>
+    {Object.entries(locationCounts).map(([location, count]) => (
+  <Card key={location}>
+    <CardHeader>
+      <CardTitle>{location.charAt(0).toUpperCase() + location.slice(1)} Items</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold">{count}</div>
+    </CardContent>
+  </Card>
+))}
     <div>Total: {total}</div>
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
