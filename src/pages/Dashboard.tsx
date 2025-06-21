@@ -6,6 +6,9 @@ import { Product } from '@/types';
 import { Package, AlertTriangle, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+const restaurantCount = allProducts.filter(p => (p.location || '').toLowerCase() === 'restaurant').length;
+const bakeryCount = allProducts.filter(p => (p.location || '').toLowerCase() === 'bakery').length;
+
 const total = products?.reduce((sum, item) => sum + (item.total || 0), 0);
 
 const bakery = allProducts.filter(p => p.location?.toLowerCase() === 'bakery');
