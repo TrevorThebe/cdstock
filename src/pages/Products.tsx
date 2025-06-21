@@ -54,7 +54,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
     const isLowStock = product.quantity <= product.minQuantity;
     
     return (
-      <Card className={`${isLowStock ? 'border-red-200 bg-red-50' : ''}`}>
+      <Card className={`R{isLowStock ? 'border-red-200 bg-red-50' : ''}`}>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
             <div className="flex-1 min-w-0">
@@ -95,7 +95,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Price:</span>
-            <span className="font-medium">${product.price}</span>
+            <span className="font-medium">R{product.price}</span>
           </div>
           <div className="flex justify-between items-center pt-2">
             <Badge variant={product.location === 'restaurant' ? 'default' : 'secondary'} className="text-xs">
