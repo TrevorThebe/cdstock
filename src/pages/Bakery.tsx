@@ -108,7 +108,7 @@ export const Bakery: React.FC = () => {
                     <span className="text-sm text-muted-foreground">Quantity:</span>
                     <div className="flex items-center space-x-2">
                       {isLowStock && <AlertTriangle className="h-4 w-4 text-red-500" />}
-                      <span className={`font-medium R${isLowStock ? 'text-red-600' : ''}`}>
+                      <span className={`font-medium R{isLowStock ? 'text-red-600' : ''}`}>
                         {product.quantity}
                       </span>
                     </div>
@@ -119,7 +119,7 @@ export const Bakery: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Price:</span>
-                    <span className="font-medium">R${product.price}</span>
+                    <span className="font-medium">R{product.price}</span>
                   </div>
                   {isLowStock && (
                     <Badge variant="destructive" className="w-full justify-center">
