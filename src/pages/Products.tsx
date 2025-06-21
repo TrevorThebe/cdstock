@@ -125,7 +125,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
     <div className="p-4 lg:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl lg:text-3xl font-bold">Products update</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold">Products2</h1>
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
