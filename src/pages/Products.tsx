@@ -10,7 +10,7 @@ import { Search, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 import { databaseService } from '@/lib/database';
-
+   
 interface ProductsProps {
   onEditProduct: (product: Product) => void;
 }
