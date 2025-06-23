@@ -141,7 +141,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
             <span className="font-medium">R{product.price}</span>
           </div>
           <div className="flex justify-between items-center pt-2">
-            <Badge variant={product.location === 'restaurant' ? 'default' : 'secondary'} className="text-xs">
+            <Badge variant={product.name === 'restaurant' ? 'default' : 'secondary'} className="text-xs">
               {product.location}
             </Badge>
             {isLowStock && (
