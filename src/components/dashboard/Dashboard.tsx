@@ -3,122 +3,75 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Bell, Package, Users, TrendingUp } from 'lucide-react';
-import { storage } from '@/lib/storage';
-import { supabase } from '@/lib/supabase';
-import { Product, User, Notification } from '@/types';
-import { toast } from '@/components/ui/use-toast';
+import { authService } from '@/lib/auth';
+import { databaseService } from '@/lib/database';
+import { Product, User } from '@/types';
 
 export const Dashboard: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadData();
-    getCurrentUser();
-    checkLowStock();
   }, []);
 
-  const getCurrentUser = async () => {
+  const loadData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = authService.getCurrentUser();
       if (user) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (profile) {
-          setCurrentUser({
-            id: user.id,
-            name: profile.name,
-            email: user.email,
-            role: profile.role,
-            avatar_url: profile.avatar_url
-          });
-        }
+        const profile = await databaseService.getUserProfile(user.id);
+        setCurrentUser({ ...user, ...profile });
       }
+      
+      const allProducts = await databaseService.getProducts();
+      setProducts(allProducts);
     } catch (error) {
-      console.error('Error loading current user:', error);
-      // Fallback to localStorage if Supabase fails
-      setCurrentUser(storage.getCurrentUser());
-    }
-  };
-
-  const loadData = () => {
-    setProducts(storage.getProducts());
-    setUsers(storage.getUsers());
-    setNotifications(storage.getNotifications());
-  };
-
-  const checkLowStock = () => {
-    const products = storage.getProducts();
-    const lowStockProducts = products.filter(p => p.quantity <= 3);
-    
-    if (lowStockProducts.length > 0) {
-      const notifications = storage.getNotifications();
-      lowStockProducts.forEach(product => {
-        const existingNotification = notifications.find(
-          n => n.message.includes(product.name) && n.type === 'low-stock'
-        );
-        
-        if (!existingNotification) {
-          const notification: Notification = {
-            id: Math.random().toString(36).substr(2, 9),
-            message: `Low stock alert: ${product.name} (${product.quantity} remaining)`,
-            type: 'low-stock',
-            read: false,
-            createdAt: new Date().toISOString()
-          };
-          notifications.push(notification);
-        }
-      });
-      storage.saveNotifications(notifications);
-      setNotifications(notifications);
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const restaurantProducts = products.filter(p => p.location === 'restaurant');
   const bakeryProducts = products.filter(p => p.location === 'bakery');
-  const lowStockCount = products.filter(p => p.quantity <= 3).length;
-  const unreadNotifications = notifications.filter(n => !n.read).length;
+  const lowStockCount = products.filter(p => p.quantity <= p.minQuantity).length;
+
+  if (loading) {
+    return (
+      <div className="p-4 lg:p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
-      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           CD Stock Dashboard
         </h1>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            {unreadNotifications > 0 && (
-              <Badge variant="destructive">{unreadNotifications}</Badge>
-            )}
-          </div>
-          {currentUser && (
-            <div className="flex items-center gap-3">
-              <Avatar className="h-8 w-8 lg:h-10 lg:w-10">
-                <AvatarImage src={currentUser.avatar_url} />
-                <AvatarFallback className="text-xs lg:text-sm">
-                  {currentUser.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium truncate max-w-32">{currentUser.name}</p>
-                <Badge variant="outline" className="text-xs">
-                  {currentUser.role}
-                </Badge>
-              </div>
+        {currentUser && (
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8 lg:h-10 lg:w-10">
+              <AvatarImage src={currentUser.avatar_url} />
+              <AvatarFallback className="text-xs lg:text-sm">
+                {currentUser.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-medium truncate max-w-32">{currentUser.name}</p>
+              <Badge variant="outline" className="text-xs">
+                {currentUser.role}
+              </Badge>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
         <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -161,7 +114,6 @@ export const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Welcome Card */}
       {currentUser && (
         <Card>
           <CardHeader>
