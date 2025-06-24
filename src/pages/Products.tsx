@@ -3,10 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/lib/supabase'; // Make sure supabase client is imported
+import { supabase } from '@/lib/supabase';
 
 export const Products: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'restaurant' | 'bakery'>('all');
   const [loading, setLoading] = useState(true);
@@ -15,6 +16,7 @@ export const Products: React.FC = () => {
 
   useEffect(() => {
     loadProducts();
+    loadLocations();
   }, []);
 
   const loadProducts = async () => {
@@ -25,13 +27,13 @@ export const Products: React.FC = () => {
         .select(`
           *,
           locations (
+            id,
             Location
           )
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-
       setProducts(data || []);
     } catch (error) {
       setProducts([]);
@@ -40,20 +42,30 @@ export const Products: React.FC = () => {
     }
   };
 
+  const loadLocations = async () => {
+    const { data, error } = await supabase.from('locations').select('*');
+    if (!error) setLocations(data || []);
+  };
+
   const filteredProducts = products.filter(product => {
     const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
     if (activeTab === 'all') return matchesSearch;
+    // Filter based on human name, not ID
     return matchesSearch && product.locations?.Location?.toLowerCase() === activeTab;
   });
 
   const handleEditProduct = (product: any) => {
     setEditingProduct(product);
     setEditForm({
-      ...product,
-      location: product.location || '',
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      quantity: product.stock_quantity,
+      min_quantity: product.min_quantity,
+      location: product.location, // this is the ID
     });
   };
 
@@ -71,16 +83,14 @@ export const Products: React.FC = () => {
     e.preventDefault();
     if (!editingProduct) return;
     try {
-      const updatedProduct: any = {
-        id: editingProduct.id,
-        name: editForm.name ?? editingProduct.name,
-        description: editForm.description ?? editingProduct.description,
-        price: editForm.price ?? editingProduct.price,
-        stock_quantity: editForm.quantity !== undefined ? editForm.quantity : editingProduct.quantity,
-        min_quantity: editForm.min_quantity !== undefined
-          ? editForm.min_quantity
-          : editingProduct.min_quantity,
-        location: editForm.location ?? editingProduct.location,
+      const updatedProduct = {
+        ...editingProduct,
+        name: editForm.name,
+        description: editForm.description,
+        price: editForm.price,
+        stock_quantity: editForm.quantity,
+        min_quantity: editForm.min_quantity,
+        location: editForm.location, // this should be the ID
       };
 
       const { error } = await supabase
@@ -169,8 +179,70 @@ export const Products: React.FC = () => {
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Edit Product</h2>
             <form onSubmit={handleEditFormSubmit} className="space-y-4">
-              {/* ...inputs as before... */}
-              {/* You may want to update your location selection to show human-readable location names */}
+              <div>
+                <label>Name</label>
+                <Input
+                  name="name"
+                  value={editForm.name}
+                  onChange={handleEditFormChange}
+                  required
+                />
+              </div>
+              <div>
+                <label>Description</label>
+                <Input
+                  name="description"
+                  value={editForm.description}
+                  onChange={handleEditFormChange}
+                />
+              </div>
+              <div>
+                <label>Price</label>
+                <Input
+                  name="price"
+                  type="number"
+                  value={editForm.price}
+                  onChange={handleEditFormChange}
+                  required
+                />
+              </div>
+              <div>
+                <label>Quantity</label>
+                <Input
+                  name="quantity"
+                  type="number"
+                  value={editForm.quantity}
+                  onChange={handleEditFormChange}
+                  required
+                />
+              </div>
+              <div>
+                <label>Min Quantity</label>
+                <Input
+                  name="min_quantity"
+                  type="number"
+                  value={editForm.min_quantity}
+                  onChange={handleEditFormChange}
+                  required
+                />
+              </div>
+              <div>
+                <label>Location</label>
+                <select
+                  name="location"
+                  value={editForm.location}
+                  onChange={handleEditFormChange}
+                  required
+                  className="w-full border rounded px-2 py-1"
+                >
+                  <option value="">Select a location</option>
+                  {locations.map(loc => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.Location}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setEditingProduct(null)}>
                   Cancel
