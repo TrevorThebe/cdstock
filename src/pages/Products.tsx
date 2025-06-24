@@ -24,7 +24,7 @@ export const Products: React.FC = () => {
         .from('products')
         .select(`
           *,
-          location (
+          locations (
             name
           )
         `)
@@ -46,7 +46,7 @@ export const Products: React.FC = () => {
       product.description.toLowerCase().includes(searchTerm.toLowerCase());
 
     if (activeTab === 'all') return matchesSearch;
-    return matchesSearch && product.location?.name?.toLowerCase() === activeTab;
+    return matchesSearch && product.locations?.name?.toLowerCase() === activeTab;
   });
 
   const handleEditProduct = (product: any) => {
@@ -150,7 +150,7 @@ export const Products: React.FC = () => {
               <div className="mb-2">Quantity: {product.stock_quantity}</div>
               <div className="mb-2">Price: R{product.price}</div>
               <Badge className="text-xs">
-                {product.location?.name || 'Unknown Location'}
+                {product.locations?.name || 'Unknown Location'}
               </Badge>
               <div className="mb-2">Min Quantity: {product.min_quantity}</div>
               <div className="mt-2">
