@@ -51,21 +51,20 @@ export const Products: React.FC = () => {
     const matchesSearch =
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchTerm.toLowerCase());
-
     if (activeTab === 'all') return matchesSearch;
-    // Filter based on human name, not ID
     return matchesSearch && product.locations?.Location?.toLowerCase() === activeTab;
   });
 
   const handleEditProduct = (product: any) => {
     setEditingProduct(product);
     setEditForm({
+      id: product.id,
       name: product.name,
       description: product.description,
       price: product.price,
       quantity: product.stock_quantity,
       min_quantity: product.min_quantity,
-      location: product.location, // this is the ID
+      location: product.location, // this is the location id
     });
   };
 
@@ -84,13 +83,13 @@ export const Products: React.FC = () => {
     if (!editingProduct) return;
     try {
       const updatedProduct = {
-        ...editingProduct,
+        id: editForm.id,
         name: editForm.name,
         description: editForm.description,
         price: editForm.price,
         stock_quantity: editForm.quantity,
         min_quantity: editForm.min_quantity,
-        location: editForm.location, // this should be the ID
+        location: editForm.location, // this is the location id
       };
 
       const { error } = await supabase
@@ -173,7 +172,6 @@ export const Products: React.FC = () => {
         ))}
       </div>
 
-      {/* Edit Product Modal */}
       {editingProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
