@@ -52,7 +52,7 @@ export const Dashboard: React.FC = () => {
         ...p,
         quantity: p.stock_quantity,
         min_quantity: p.min_quantity,
-        locationName: p.locations?.name?.toLowerCase() || '', // for easy filtering
+        locationName: p.locations?.Location?.toLowerCase() || '', // for easy filtering
       }));
 
       // Stats calculations
