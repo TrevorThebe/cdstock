@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Product } from '@/types';
-import { storage } from '@/lib/storage';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { databaseService } from '@/lib/database';
+import { Product } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 interface AddProductProps {
@@ -17,28 +17,31 @@ interface AddProductProps {
 
 export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSaved }) => {
   const [formData, setFormData] = useState({
-    name: editProduct?.name || '',
-    description: editProduct?.description || '',
-    quantity: editProduct?.quantity?.toString() || '',
-    minQuantity: editProduct?.minQuantity?.toString() || '3',
-    price: editProduct?.price?.toString() || '',
-    location: editProduct?.location || 'restaurant'
+    name: '',
+    description: '',
+    quantity: '',
+    minQuantity: '',
+    price: '',
+    location: 'restaurant' as 'restaurant' | 'bakery'
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
+  useEffect(() => {
+    if (editProduct) {
+      setFormData({
+        name: editProduct.name,
+        description: editProduct.description,
+        quantity: editProduct.stock_quantity?.toString() ?? '', // use stock_quantity from DB
+        minQuantity: editProduct.min_quantity?.toString() ?? '', // use min_quantity from DB
+        price: editProduct.price?.toString() ?? '',
+        location: editProduct.location
+      });
+    }
+  }, [editProduct]);
 
-  const handleSelectChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      location: value as 'restaurant' | 'bakery'
-    }));
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,161 +49,82 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
     setIsLoading(true);
 
     try {
-      const products = storage.getProducts();
-      const productData: Product = {
+      // Prepare payload for Supabase (snake_case for DB fields)
+      const productData = {
         id: editProduct?.id || uuidv4(),
         name: formData.name,
         description: formData.description,
-        quantity: parseInt(formData.quantity),
-        minQuantity: parseInt(formData.minQuantity),
+        stock_quantity: parseInt(formData.quantity),
+        min_quantity: parseInt(formData.minQuantity),
         price: parseFloat(formData.price),
-        location: formData.location as 'restaurant' | 'bakery',
-        createdAt: editProduct?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        location: formData.location,
+        created_at: editProduct?.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
 
-      let updatedProducts;
-      if (editProduct) {
-        updatedProducts = products.map(p => p.id === editProduct.id ? productData : p);
-      } else {
-        updatedProducts = [...products, productData];
-      }
-
-      storage.saveProducts(updatedProducts);
-      
-      toast({
-        title: 'Success',
-        description: `Product ${editProduct ? 'updated' : 'added'} successfully`
-      });
-
-      if (!editProduct) {
-        setFormData({
-          name: '',
-          description: '',
-          quantity: '',
-          minQuantity: '3',
-          price: '',
-          location: 'restaurant'
-        });
-      }
-      
+      await databaseService.saveProduct(productData);
+      toast({ title: 'Success', description: `Product ${editProduct ? 'updated' : 'added'} successfully` });
       onProductSaved();
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: `Failed to ${editProduct ? 'update' : 'add'} product`,
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'Failed to save product', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
+    <div className="p-4 lg:p-6 max-w-2xl mx-auto">
       <Card>
         <CardHeader>
           <CardTitle>{editProduct ? 'Edit Product' : 'Add New Product'}</CardTitle>
-          <CardDescription>
-            {editProduct ? 'Update product information' : 'Add a new product to your inventory'}
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Product Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Enter product name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="location">Location</Label>
-                <Select value={formData.location} onValueChange={handleSelectChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="restaurant">Restaurant</SelectItem>
-                    <SelectItem value="bakery">Bakery</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label htmlFor="name">Product Name</Label>
+              <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
             </div>
-
             <div>
               <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Enter product description"
-                rows={3}
-              />
+              <Textarea id="description" name="description" value={formData.description} onChange={handleInputChange} />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="quantity">Current Quantity</Label>
-                <Input
-                  id="quantity"
-                  name="quantity"
-                  type="number"
-                  value={formData.quantity}
-                  onChange={handleInputChange}
-                  required
-                  min="0"
-                  placeholder="0"
-                />
+                <Label htmlFor="quantity">Quantity</Label>
+                <Input id="quantity" name="quantity" type="number" value={formData.quantity} onChange={handleInputChange} required />
               </div>
               <div>
-                <Label htmlFor="minQuantity">Minimum Quantity</Label>
-                <Input
-                  id="minQuantity"
-                  name="minQuantity"
-                  type="number"
-                  value={formData.minQuantity}
-                  onChange={handleInputChange}
-                  required
-                  min="1"
-                  placeholder="3"
-                />
-              </div>
-              <div>
-                <Label htmlFor="price">Price ($)</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  required
-                  min="0"
-                  placeholder="0.00"
-                />
+                <Label htmlFor="minQuantity">Min Quantity</Label>
+                <Input id="minQuantity" name="minQuantity" type="number" value={formData.minQuantity} onChange={handleInputChange} required />
               </div>
             </div>
-
-            <div className="flex space-x-4 pt-4">
-              <Button type="submit" disabled={isLoading} className="flex-1">
-                {isLoading ? 'Saving...' : (editProduct ? 'Update Product' : 'Add Product')}
+            <div>
+              <Label htmlFor="price">Price</Label>
+              <Input id="price" name="price" type="number" step="0.01" value={formData.price} onChange={handleInputChange} required />
+            </div>
+            <div>
+              <Label htmlFor="location">Location</Label>
+              <Select value={formData.location} onValueChange={(value) => setFormData(prev => ({ ...prev, location: value as 'restaurant' | 'bakery' }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="restaurant">Restaurant</SelectItem>
+                  <SelectItem value="bakery">Bakery</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-4">
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? 'Saving...' : editProduct ? 'Update Product' : 'Add Product'}
               </Button>
-              {editProduct && (
-                <Button type="button" variant="outline" onClick={onProductSaved}>
-                  Cancel
-                </Button>
-              )}
+              <Button type="button" variant="outline" onClick={onProductSaved}>
+                Cancel
+              </Button>
             </div>
           </form>
         </CardContent>
       </Card>
     </div>
   );
-};
+};  

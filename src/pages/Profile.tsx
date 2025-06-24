@@ -4,10 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { User, Mail, Phone } from 'lucide-react';
 import { authService } from '@/lib/auth';
+import { databaseService } from '@/lib/database';
 
 interface User {
   id: string;
@@ -18,80 +18,35 @@ interface User {
   role: string;
 }
 
-interface ProfileProps {
-  currentUser?: User;
-  onUserUpdate?: (user: User) => void;
-}
-
-export const Profile: React.FC<ProfileProps> = ({ currentUser: propUser, onUserUpdate }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(propUser || authService.getCurrentUser());
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: ''
-  });
+export const Profile: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [formData, setFormData] = useState({ name: '', phone: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (currentUser) {
-      setFormData({
-        name: currentUser.name || '',
-        phone: currentUser.phone || ''
-      });
-      setIsLoadingProfile(false);
-    } else {
-      getCurrentUser();
-    }
-  }, [currentUser]);
+    getCurrentUser();
+  }, []);
 
   const getCurrentUser = async () => {
     try {
-      setIsLoadingProfile(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const user = authService.getCurrentUser();
       if (user) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-        
-        const userData: User = {
-          id: user.id,
-          name: profile?.name || user.user_metadata?.name || 'User',
-          email: user.email || '',
-          phone: profile?.phone || '',
-          avatar_url: profile?.avatar_url,
-          role: profile?.role || 'normal'
-        };
-        
+        const profile = await databaseService.getUserProfile(user.id);
+        const userData = { ...user, ...profile };
         setCurrentUser(userData);
-        setFormData({
-          name: userData.name,
-          phone: userData.phone || ''
-        });
+        setFormData({ name: userData.name, phone: userData.phone || '' });
       }
     } catch (error) {
       console.error('Error loading user:', error);
-      const fallbackUser = authService.getCurrentUser();
-      if (fallbackUser) {
-        setCurrentUser(fallbackUser);
-        setFormData({
-          name: fallbackUser.name,
-          phone: fallbackUser.phone || ''
-        });
-      }
     } finally {
       setIsLoadingProfile(false);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -100,29 +55,16 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser: propUser, onUserU
 
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          name: formData.name,
-          phone: formData.phone
-        })
-        .eq('user_id', currentUser.id);
-
-      if (error) throw error;
-
-      const updatedUser = {
-        ...currentUser,
+      await databaseService.saveUserProfile({
+        user_id: currentUser.id,
         name: formData.name,
         phone: formData.phone
-      };
-      
-      setCurrentUser(updatedUser);
-      if (onUserUpdate) onUserUpdate(updatedUser);
-      
-      toast({
-        title: 'Success',
-        description: 'Profile updated successfully'
       });
+      
+      const updatedUser = { ...currentUser, name: formData.name, phone: formData.phone };
+      setCurrentUser(updatedUser);
+      
+      toast({ title: 'Success', description: 'Profile updated successfully' });
     } catch (error: any) {
       toast({
         title: 'Error',

@@ -1,203 +1,245 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { databaseService } from '@/lib/database';
 import { Product } from '@/types';
-import { storage } from '@/lib/storage';
-import { Search, Edit, Trash2, AlertTriangle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import React, { useState } from 'react';
-import { useProducts } from '../hooks/useProducts';
 
-
-const total = products?.reduce((sum, item) => sum + (item.total || 0), 0);
-const api = {
-  fetchProducts: () => fetch('/api/products').then(r => r.json()),
-  saveProduct: (product: any) =>
-    fetch('/api/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(product),
-    }),
-};
-
-export default function Products() {
-  const { products, saveProduct } = useProducts(api);
-  const [name, setName] = useState('');
-
-  const handleAdd = async () => {
-    const newProduct = { id: Date.now(), name };
-    await saveProduct(newProduct);
-    setName('');
-  };
-
-  return (
-    <div>
-      <h1>Products</h1>
-      <input
-        value={name}
-        onChange={e => setName(e.target.value)}
-        placeholder="Product name"
-      />
-      <button onClick={handleAdd}>Add Product</button>
-      <ul>
-        {products.map(p => (
-          <li key={p.id}>{p.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-interface ProductsProps {
-  onEditProduct: (product: Product) => void;
-}
-
-export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
+export const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<'all' | 'restaurant' | 'bakery'>('all');
+  const [loading, setLoading] = useState(true);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
 
   useEffect(() => {
     loadProducts();
   }, []);
 
-  const loadProducts = () => {
-    const allProducts = storage.getProducts();
-    setProducts(allProducts);
-  };
-
-  const handleDeleteProduct = (productId: string) => {
-    const updatedProducts = products.filter(p => p.id !== productId);
-    storage.saveProducts(updatedProducts);
-    setProducts(updatedProducts);
-    toast({
-      title: 'Success',
-      description: 'Product deleted successfully'
-    });
+  const loadProducts = async () => {
+    setLoading(true);
+    try {
+      const allProducts = await databaseService.getProducts();
+      const mappedProducts = allProducts.map((p: any) => ({
+        ...p,
+        quantity: p.stock_quantity,
+        min_quantity: p.min_quantity,
+      }));
+      setProducts(mappedProducts);
+    } catch (error) {
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredProducts = products.filter(product => {
-    
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+
     if (activeTab === 'all') return matchesSearch;
-    if (activeTab === 'restaurant') return matchesSearch && product.location === 'restaurant';
-    if (activeTab === 'bakery') return matchesSearch && product.location === 'bakery';
-    if (activeTab === 'low-stock') return matchesSearch && product.quantity <= product.minQuantity;
-    
-    return matchesSearch;
+    return matchesSearch && product.location === activeTab;
   });
 
-  const ProductCard = ({ product }: { product: Product }) => {
-    const isLowStock = product.quantity <= product.minQuantity;
-    
-    return (
-      <Card className={`R{isLowStock ? 'border-red-200 bg-red-50' : ''}`}>
-        <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-            <div className="flex-1 min-w-0">
-              <CardTitle className="text-base lg:text-lg truncate">{product.name}</CardTitle>
-              <CardDescription className="text-sm line-clamp-2">{product.description}</CardDescription>
-            </div>
-            <div className="flex space-x-2 flex-shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onEditProduct(product)}
-                className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
-              >
-                <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:ml-2 sm:inline">Edit</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDeleteProduct(product.id)}
-                className="text-red-600 hover:text-red-700 h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
-              >
-                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:ml-2 sm:inline">Delete</span>
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Quantity:</span>
-            <div className="flex items-center space-x-2">
-              {isLowStock && <AlertTriangle className="h-4 w-4 text-red-500" />}
-              <span className={`font-medium ${isLowStock ? 'text-red-600' : ''}`}>
-                {product.quantity}
-              </span>
-            </div>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Price:</span>
-            <span className="font-medium">R{product.price}</span>
-          </div>
-          <div className="flex justify-between items-center pt-2">
-            <Badge variant={product.name === 'restaurant' ? 'default' : 'secondary'} className="text-xs">
-              {product.location}
-            </Badge>
-            {isLowStock && (
-              <Badge variant="destructive" className="text-xs">Low Stock</Badge>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setEditForm({
+      ...product,
+      location: product.location || '',
+    });
   };
 
+  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditForm(prev => ({
+      ...prev,
+      [name]: name === 'quantity' || name === 'min_quantity' || name === 'price'
+        ? Number(value)
+        : value
+    }));
+  };
+
+  const handleEditFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    try {
+      // Prepare payload for Supabase (snake_case for min_quantity)
+      const updatedProduct: any = {
+        id: editingProduct.id,
+        name: editForm.name ?? editingProduct.name,
+        description: editForm.description ?? editingProduct.description,
+        price: editForm.price ?? editingProduct.price,
+        stock_quantity: editForm.quantity !== undefined ? editForm.quantity : editingProduct.quantity,
+        min_quantity: editForm.min_quantity !== undefined
+          ? editForm.min_quantity
+          : editingProduct.min_quantity,
+        location: editForm.location ?? editingProduct.location,
+      };
+      // Debug: log payload
+      // console.log('Saving product:', updatedProduct);
+      await databaseService.saveProduct(updatedProduct);
+      setProducts(prev =>
+        prev.map(p =>
+          p.id === updatedProduct.id
+            ? { ...updatedProduct, quantity: updatedProduct.stock_quantity }
+            : p
+        )
+      );
+      setEditingProduct(null);
+    } catch (error) {
+      // Handle error as needed
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4 lg:p-6">
-      {/* Header */}
+    <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl lg:text-3xl font-bold">Products2</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold">Products</h1>
         <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Search products..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            onChange={e => setSearchTerm(e.target.value)}
+            className="pl-4"
           />
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto">
-          <TabsTrigger value="all" className="text-xs sm:text-sm px-2 py-2">
-            All ({products.length})
-          </TabsTrigger>
-          <TabsTrigger value="restaurant" className="text-xs sm:text-sm px-2 py-2">
-            Restaurant ({products.filter(p => p.location === 'restaurant').length})
-          </TabsTrigger>
-          <TabsTrigger value="bakery" className="text-xs sm:text-sm px-2 py-2">
-            Bakery ({products.filter(p => p.location === 'bakery').length})
-          </TabsTrigger>
-          <TabsTrigger value="low-stock" className="text-xs sm:text-sm px-2 py-2">
-            Low Stock ({products.filter(p => p.quantity <= p.minQuantity).length})
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="flex gap-2 mb-6">
+        <Button
+          variant={activeTab === 'all' ? 'default' : 'outline'}
+          onClick={() => setActiveTab('all')}
+        >
+          All
+        </Button>
+        <Button
+          variant={activeTab === 'restaurant' ? 'default' : 'outline'}
+          onClick={() => setActiveTab('restaurant')}
+        >
+          Restaurant
+        </Button>
+        <Button
+          variant={activeTab === 'bakery' ? 'default' : 'outline'}
+          onClick={() => setActiveTab('bakery')}
+        >
+          Bakery
+        </Button>
+      </div>
 
-      {/* Products Grid */}
+      {filteredProducts.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground">
+          No products found.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filteredProducts.map(product => (
-          <ProductCard key={product.id} product={product} />
+          <Card key={product.id}>
+            <CardHeader>
+              <CardTitle>{product.name}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-2">{product.description}</div>
+              <div className="mb-2">Quantity: {product.quantity}</div>
+              <div className="mb-2">Price: R{product.price}</div>
+              <Badge className="text-xs">{product.location}</Badge>
+              <div className="mb-2">Min Quantity: {product.min_quantity}</div>
+              <div className="mt-2">
+                <Button size="sm" onClick={() => handleEditProduct(product)}>
+                  Edit
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      {/* Empty State */}
-      {filteredProducts.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No products found matching your criteria.</p>
+      {/* Edit Product Modal */}
+      {editingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Edit Product</h2>
+            <form onSubmit={handleEditFormSubmit} className="space-y-4">
+              <Input
+                name="name"
+                placeholder="Product Name"
+                value={editForm.name ?? editingProduct.name}
+                onChange={handleEditFormChange}
+                required
+              />
+              <Input
+                name="description"
+                placeholder="Description"
+                value={editForm.description ?? editingProduct.description}
+                onChange={handleEditFormChange}
+                required
+              />
+              <Input
+                name="quantity"
+                type="number"
+                placeholder="Quantity"
+                value={
+                  editForm.quantity !== undefined && editForm.quantity !== null
+                    ? editForm.quantity
+                    : editingProduct.quantity
+                }
+                onChange={handleEditFormChange}
+                required
+              />
+              <Input
+                name="min_quantity"
+                type="number"
+                placeholder="Min Quantity"
+                value={
+                  editForm.min_quantity !== undefined && editForm.min_quantity !== null
+                    ? editForm.min_quantity
+                    : editingProduct.min_quantity
+                }
+                onChange={handleEditFormChange}
+                required
+              />
+              <Input
+                name="price"
+                type="number"
+                placeholder="Price"
+                value={
+                  editForm.price !== undefined && editForm.price !== null
+                    ? editForm.price
+                    : editingProduct.price
+                }
+                onChange={handleEditFormChange}
+                required
+              />
+              <select
+                name="location"
+                value={editForm.location ?? editingProduct.location ?? ''}
+                onChange={handleEditFormChange}
+                className="w-full border rounded px-3 py-2"
+                required
+              >
+                <option value="">Select a location...</option>
+                <option value="restaurant">Restaurant</option>
+                <option value="bakery">Bakery</option>
+              </select>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setEditingProduct(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Save</Button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
