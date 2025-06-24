@@ -23,7 +23,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
 
         if (locationError || !location) {
           throw new Error(locationError?.message || 'Location not found');
-        }
+        } 
 
         // Then get products that reference this location ID
         const { data: productsData, error: productsError } = await supabase
