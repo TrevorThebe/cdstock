@@ -22,7 +22,7 @@ export const Dashboard: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Fetch products with joined location names
+      // Fetch products with joined location Location
       const { data, error } = await supabase
         .from('products')
         .select(`
