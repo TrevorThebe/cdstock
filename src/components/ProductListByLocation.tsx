@@ -31,7 +31,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
           .select(`
             *,
             locations (
-              id,
+              location,
               Location
             )
           `)
