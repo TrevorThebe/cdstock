@@ -35,7 +35,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
               Location
             )
           `)
-          .eq('location_id', locations.id)
+          .eq('id', locations.id)
           .order('created_at', { ascending: false });
 
         if (productsError) throw productsError;
