@@ -9,24 +9,23 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const { data: productsData, error: productsError } = await supabase
-  .from('products')
-  .select('*')
-  .eq('location_id', locationId) // You might need to get the ID first
-  .order('created_at', { ascending: false });
+    const fetchProducts = async () => {
+      setLoading(true);
+      setError(null);
       
       try {
-        // First debug: Check if we can fetch anything at all
-        const { data, error: fetchError } = await supabase
-          .from('products')
-          .select('*')
-          .limit(1);
-          
-        console.log('Initial test fetch:', data, fetchError);
-        
-        if (fetchError) throw fetchError;
+        // First, get the location ID that matches the locationName
+        const { data: locations, error: locationError } = await supabase
+          .from('locations')
+          .select('id')
+          .ilike('Location', locationName)
+          .single();
 
-        // Now try the actual query
+        if (locationError || !locations) {
+          throw new Error(locationError?.message || 'Location not found');
+        }
+
+        // Then get products for that location
         const { data: productsData, error: productsError } = await supabase
           .from('products')
           .select(`
@@ -36,22 +35,17 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
               Location
             )
           `)
+          .eq('location_id', locations.id)
           .order('created_at', { ascending: false });
 
-        console.log('Full products query:', productsData, productsError);
-        
         if (productsError) throw productsError;
 
-        const filteredProducts = (productsData || []).filter(
-          (p: any) => p.locations?.Location?.toLowerCase() === locationName.toLowerCase()
-        );
-
-        console.log('Filtered products:', filteredProducts);
-        
-        setProducts(filteredProducts);
+        console.log('Fetched products:', productsData);
+        setProducts(productsData || []);
       } catch (err) {
         console.error('Fetch error:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
+        setProducts([]);
       } finally {
         setLoading(false);
       }
@@ -75,7 +69,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
   if (products.length === 0) {
     return (
       <div className="p-6 text-center text-muted-foreground">
-        No products found for {locationName}. Check if the location exists in your database.
+        No products found for {locationName}.
       </div>
     );
   }
