@@ -11,7 +11,7 @@ export const Dashboard: React.FC = () => {
     bakeryItems: 0,
     totalValue: 0,
     restaurantValue: 0,
-    bakeryValue: 0,
+    bakeryValue: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -22,7 +22,7 @@ export const Dashboard: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Fetch products with joined location Location
+      // Fetch joined products and location names
       const { data, error } = await supabase
         .from('products')
         .select(`
@@ -33,27 +33,33 @@ export const Dashboard: React.FC = () => {
         `);
 
       if (error) throw error;
-      const allProducts = data || [];
+      if (!data) {
+        setProducts([]);
+        setStats({
+          totalProducts: 0,
+          lowStockItems: 0,
+          restaurantItems: 0,
+          bakeryItems: 0,
+          totalValue: 0,
+          restaurantValue: 0,
+          bakeryValue: 0
+        });
+        return;
+      }
 
-      // Use location name for all calculations
-      const mappedProducts = allProducts.map((p: any) => ({
+      // Normalize/mapping
+      const mappedProducts = data.map((p: any) => ({
         ...p,
         quantity: p.stock_quantity,
-        // For minQuantity and price, add similar mappings if needed
+        min_quantity: p.min_quantity,
+        locationName: p.locations?.name?.toLowerCase() || '', // for easy filtering
       }));
 
-      const restaurantProducts = mappedProducts.filter(
-        (p: any) => p.locations?.Location?.toLowerCase() === 'restaurant'
-      );
-      const bakeryProducts = mappedProducts.filter(
-        (p: any) => p.locations?.Location?.toLowerCase() === 'bakery'
-      );
+      // Stats calculations
+      const restaurantProducts = mappedProducts.filter(p => p.locationName === 'restaurant');
+      const bakeryProducts = mappedProducts.filter(p => p.locationName === 'bakery');
+      const lowStock = mappedProducts.filter(p => p.quantity <= p.min_quantity);
 
-      const lowStock = mappedProducts.filter(
-        (p: any) => p.quantity <= p.min_quantity
-      );
-
-      // Value calculations
       const totalValue = mappedProducts.reduce(
         (sum, p) => sum + ((Number(p.price) || 0) * (Number(p.quantity) || 0)), 0
       );
@@ -75,7 +81,16 @@ export const Dashboard: React.FC = () => {
         bakeryValue,
       });
     } catch (error) {
-      // Handle error as needed
+      setProducts([]);
+      setStats({
+        totalProducts: 0,
+        lowStockItems: 0,
+        restaurantItems: 0,
+        bakeryItems: 0,
+        totalValue: 0,
+        restaurantValue: 0,
+        bakeryValue: 0
+      });
     } finally {
       setLoading(false);
     }
@@ -128,7 +143,7 @@ export const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-      {/* You can add cards for stats.totalValue, stats.restaurantValue, stats.bakeryValue as needed */}
+      {/* Optionally display totalValue, restaurantValue, bakeryValue */}
     </div>
   );
 };
