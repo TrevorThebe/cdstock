@@ -6,30 +6,55 @@ import { supabase } from '@/lib/supabase';
 export const ProductListByLocation: React.FC<{ locationName: string }> = ({ locationName }) => {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          locations (
-            id,
-            Location
-          )
-        `)
-        .order('created_at', { ascending: false });
+      setError(null);
+      
+      try {
+        // First debug: Check if we can fetch anything at all
+        const { data, error: fetchError } = await supabase
+          .from('products')
+          .select('*')
+          .limit(1);
+          
+        console.log('Initial test fetch:', data, fetchError);
+        
+        if (fetchError) throw fetchError;
 
-      if (!error) {
-        setProducts(
-          (data || []).filter(
-            (p: any) => p.locations?.Location?.toLowerCase() === locationName.toLowerCase()
-          )
+        // Now try the actual query
+        const { data: productsData, error: productsError } = await supabase
+          .from('products')
+          .select(`
+            *,
+            locations (
+              id,
+              Location
+            )
+          `)
+          .order('created_at', { ascending: false });
+
+        console.log('Full products query:', productsData, productsError);
+        
+        if (productsError) throw productsError;
+
+        const filteredProducts = (productsData || []).filter(
+          (p: any) => p.locations?.Location?.toLowerCase() === locationName.toLowerCase()
         );
+
+        console.log('Filtered products:', filteredProducts);
+        
+        setProducts(filteredProducts);
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
+    
     fetchProducts();
   }, [locationName]);
 
@@ -37,8 +62,20 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
     return <div className="p-6 text-center">Loading...</div>;
   }
 
+  if (error) {
+    return (
+      <div className="p-6 text-center text-red-500">
+        Error: {error}
+      </div>
+    );
+  }
+
   if (products.length === 0) {
-    return <div className="p-6 text-center text-muted-foreground">No products found for {locationName}.</div>;
+    return (
+      <div className="p-6 text-center text-muted-foreground">
+        No products found for {locationName}. Check if the location exists in your database.
+      </div>
+    );
   }
 
   return (
@@ -52,7 +89,9 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
             <div className="mb-2">{product.description}</div>
             <div className="mb-2">Quantity: {product.stock_quantity}</div>
             <div className="mb-2">Price: R{product.price}</div>
-            <Badge className="text-xs">{product.locations?.Location || 'Unknown Location'}</Badge>
+            <Badge className="text-xs">
+              {product.locations?.Location || 'Unknown Location'}
+            </Badge>
             <div className="mb-2">Min Quantity: {product.min_quantity}</div>
           </CardContent>
         </Card>
