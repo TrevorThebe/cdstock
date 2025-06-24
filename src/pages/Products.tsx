@@ -25,7 +25,7 @@ export const Products: React.FC = () => {
         .select(`
           *,
           locations (
-            name
+            Location
           )
         `)
         .order('created_at', { ascending: false });
