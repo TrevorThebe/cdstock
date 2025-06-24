@@ -18,7 +18,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
         const { data: locations, error: locationError } = await supabase
           .from('locations')
           .select('id')
-          .ilike('location', locationName)
+          .ilike('Location', locationName)
           .single();
 
         if (locationError || !locations) {
