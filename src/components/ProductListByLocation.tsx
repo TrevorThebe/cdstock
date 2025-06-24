@@ -9,9 +9,11 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      setError(null);
+    const { data: productsData, error: productsError } = await supabase
+  .from('products')
+  .select('*')
+  .eq('location_id', locationId) // You might need to get the ID first
+  .order('created_at', { ascending: false });
       
       try {
         // First debug: Check if we can fetch anything at all
