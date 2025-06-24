@@ -1,5 +1,18 @@
 import { User, Product, LoginRecord, Notification } from '@/types';
 
+interface ChatMessage {
+  id: string;
+  user_id: string;
+  recipient_id: string;
+  message: string;
+  created_at: string;
+}
+
+interface ReadNotification {
+  user_id: string;
+  notification_id: string;
+}
+
 class LocalStorage {
   private getItem<T>(key: string): T[] {
     const item = localStorage.getItem(key);
@@ -44,6 +57,24 @@ class LocalStorage {
 
   saveNotifications(notifications: Notification[]): void {
     this.setItem('cd-stock-notifications', notifications);
+  }
+
+  // Read Notifications
+  getReadNotifications(): ReadNotification[] {
+    return this.getItem<ReadNotification>('cd-stock-read-notifications');
+  }
+
+  saveReadNotifications(readNotifications: ReadNotification[]): void {
+    this.setItem('cd-stock-read-notifications', readNotifications);
+  }
+
+  // Chat Messages
+  getChatMessages(): ChatMessage[] {
+    return this.getItem<ChatMessage>('cd-stock-chat-messages');
+  }
+
+  saveChatMessages(messages: ChatMessage[]): void {
+    this.setItem('cd-stock-chat-messages', messages);
   }
 
   // Current User

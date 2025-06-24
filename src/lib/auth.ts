@@ -32,10 +32,16 @@ export const authService = {
         return user;
       }
     } catch (error) {
-      // Fallback to localStorage
+      // Fallback to localStorage for predefined users
       const users = storage.getUsers();
-      const user = users.find(u => u.email === email && u.id === password);
-      if (user) {
+      let user = users.find(u => u.email === email);
+      
+      // Check password for predefined users
+      if (user && (
+        (email === 'strevor@uwiniwin.co.za' && password === 'trevor') ||
+        (email === 'cosmodumpling1@gmail.com' && password === 'petunia') ||
+        u.id === password // Legacy fallback
+      )) {
         storage.setCurrentUser(user);
         return user;
       }
