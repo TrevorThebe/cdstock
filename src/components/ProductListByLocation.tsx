@@ -35,7 +35,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
               Location
             )
           `)
-          .eq('Location', location.id)  // This matches the foreign key in products
+          .eq('location', location.Location)  // This matches the foreign key in products
           .order('created_at', { ascending: false });
 
         if (productsError) throw productsError;
