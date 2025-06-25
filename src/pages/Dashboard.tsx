@@ -8,7 +8,7 @@ interface Product {
   stock_quantity: number;
   min_quantity: number;
   price: number;
-  location_id: string;
+  id: string;
   locations: { Location: string } | null;
 }
 
@@ -50,8 +50,8 @@ export const Dashboard: React.FC = () => {
           stock_quantity,
           min_quantity,
           price,
-          location_id,
-          locations:location_id (Location)
+          id,
+          locations:id (Location)
         `);
 
       if (error) throw error;
@@ -59,12 +59,12 @@ export const Dashboard: React.FC = () => {
       // Process products data
       const processedProducts = (products || []).map((product: Product) => ({
         ...product,
-        locationName: product.locations?.Location?.toLowerCase() || '',
+        location: product.locations?.Location?.toLowerCase() || '',
       }));
 
       // Calculate statistics
-      const restaurantProducts = processedProducts.filter(p => p.locationName === 'restaurant');
-      const bakeryProducts = processedProducts.filter(p => p.locationName === 'bakery');
+      const restaurantProducts = processedProducts.filter(p => p.location === 'restaurant');
+      const bakeryProducts = processedProducts.filter(p => p.Lcation === 'bakery');
       const lowStockProducts = processedProducts.filter(p => p.stock_quantity <= p.min_quantity);
 
       const calculateTotalValue = (items: typeof processedProducts) => 
