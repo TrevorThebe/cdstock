@@ -37,13 +37,13 @@ export const Dashboard: React.FC = () => {
         ...p,
         quantity: p.stock_quantity,
         min_quantity: p.min_quantity,
-        locationName: p.locations?.Location
+        locationName: p.location?.Location
           ? p.locations.Location.toLowerCase()
           : '',
       }));
 
-      const restaurantProducts = mappedProducts.filter(p => p.Location === 'restaurant');
-      const bakeryProducts = mappedProducts.filter(p => p.Location === 'bakery');
+      const restaurantProducts = mappedProducts.filter(p => p.locationName === 'restaurant');
+      const bakeryProducts = mappedProducts.filter(p => p.locationName === 'bakery');
       const lowStock = mappedProducts.filter(p => p.quantity <= p.min_quantity);
 
       const totalValue = mappedProducts.reduce(
