@@ -22,7 +22,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
     quantity: '',
     minQuantity: '',
     price: '',
-    location: 'restaurant' as 'restaurant' | 'bakery'
+    location: 'locations' as 'restaurant' | 'bakery'
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
