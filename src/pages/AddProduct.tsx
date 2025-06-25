@@ -22,7 +22,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
     quantity: '',
     minQuantity: '',
     price: '',
-    location: 'locations' as 'restaurant' | 'bakery'
+    location: 'restaurant' as 'restaurant' | 'bakery' // Changed default from 'locations' to 'restaurant'
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -32,10 +32,10 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
       setFormData({
         name: editProduct.name,
         description: editProduct.description,
-        quantity: editProduct.stock_quantity?.toString() ?? '', // use stock_quantity from DB
-        minQuantity: editProduct.min_quantity?.toString() ?? '', // use min_quantity from DB
+        quantity: editProduct.stock_quantity?.toString() ?? '',
+        minQuantity: editProduct.min_quantity?.toString() ?? '',
         price: editProduct.price?.toString() ?? '',
-        location: editProduct.location
+        location: editProduct.location as 'restaurant' | 'bakery' // Added type assertion
       });
     }
   }, [editProduct]);
@@ -49,7 +49,17 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
     setIsLoading(true);
 
     try {
-      // Prepare payload for Supabase (snake_case for DB fields)
+      // Validate numeric fields
+      if (isNaN(parseInt(formData.quantity)) {
+        throw new Error('Quantity must be a number');
+      }
+      if (isNaN(parseInt(formData.minQuantity))) {
+        throw new Error('Minimum quantity must be a number');
+      }
+      if (isNaN(parseFloat(formData.price))) {
+        throw new Error('Price must be a number');
+      }
+
       const productData = {
         id: editProduct?.id || uuidv4(),
         name: formData.name,
@@ -63,10 +73,18 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
       };
 
       await databaseService.saveProduct(productData);
-      toast({ title: 'Success', description: `Product ${editProduct ? 'updated' : 'added'} successfully` });
+      toast({ 
+        title: 'Success', 
+        description: `Product ${editProduct ? 'updated' : 'added'} successfully`,
+        variant: 'default'
+      });
       onProductSaved();
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to save product', variant: 'destructive' });
+      toast({ 
+        title: 'Error', 
+        description: error instanceof Error ? error.message : 'Failed to save product',
+        variant: 'destructive' 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -81,32 +99,74 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="name">Product Name</Label>
-              <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+              <Label htmlFor="name">Product Name *</Label>
+              <Input 
+                id="name" 
+                name="name" 
+                value={formData.name} 
+                onChange={handleInputChange} 
+                required 
+                minLength={2}
+              />
             </div>
             <div>
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" name="description" value={formData.description} onChange={handleInputChange} />
+              <Textarea 
+                id="description" 
+                name="description" 
+                value={formData.description} 
+                onChange={handleInputChange} 
+                rows={3}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="quantity">Quantity</Label>
-                <Input id="quantity" name="quantity" type="number" value={formData.quantity} onChange={handleInputChange} required />
+                <Label htmlFor="quantity">Current Quantity *</Label>
+                <Input 
+                  id="quantity" 
+                  name="quantity" 
+                  type="number" 
+                  min="0"
+                  value={formData.quantity} 
+                  onChange={handleInputChange} 
+                  required 
+                />
               </div>
               <div>
-                <Label htmlFor="minQuantity">Min Quantity</Label>
-                <Input id="minQuantity" name="minQuantity" type="number" value={formData.minQuantity} onChange={handleInputChange} required />
+                <Label htmlFor="minQuantity">Minimum Quantity *</Label>
+                <Input 
+                  id="minQuantity" 
+                  name="minQuantity" 
+                  type="number" 
+                  min="0"
+                  value={formData.minQuantity} 
+                  onChange={handleInputChange} 
+                  required 
+                />
               </div>
             </div>
             <div>
-              <Label htmlFor="price">Price</Label>
-              <Input id="price" name="price" type="number" step="0.01" value={formData.price} onChange={handleInputChange} required />
+              <Label htmlFor="price">Price *</Label>
+              <Input 
+                id="price" 
+                name="price" 
+                type="number" 
+                step="0.01" 
+                min="0"
+                value={formData.price} 
+                onChange={handleInputChange} 
+                required 
+              />
             </div>
             <div>
-              <Label htmlFor="location">Location</Label>
-              <Select value={formData.location} onValueChange={(value) => setFormData(prev => ({ ...prev, location: value as 'restaurant' | 'bakery' }))}>
+              <Label htmlFor="location">Location *</Label>
+              <Select 
+                value={formData.location} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, location: value as 'restaurant' | 'bakery' }))}
+                required
+              >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select location" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="restaurant">Restaurant</SelectItem>
@@ -114,7 +174,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-4 pt-4">
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? 'Saving...' : editProduct ? 'Update Product' : 'Add Product'}
               </Button>
@@ -127,4 +187,4 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
       </Card>
     </div>
   );
-};  
+};
