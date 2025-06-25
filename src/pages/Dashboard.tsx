@@ -2,9 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 
+interface Product {
+  id: string;
+  name: string;
+  stock_quantity: number;
+  min_quantity: number;
+  price: number;
+  location_id: string;
+  locations: { Location: string } | null;
+}
+
+interface DashboardStats {
+  totalProducts: number;
+  lowStockItems: number;
+  restaurantItems: number;
+  bakeryItems: number;
+  totalValue: number;
+  restaurantValue: number;
+  bakeryValue: number;
+}
+
 export const Dashboard: React.FC = () => {
-  const [products, setProducts] = useState<any[]>([]);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
     lowStockItems: 0,
     restaurantItems: 0,
@@ -22,52 +41,47 @@ export const Dashboard: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Fetch products with their location data
+      const { data: products, error } = await supabase
         .from('products')
         .select(`
-          *,
-          locations (
-            Location
-          )
+          id,
+          name,
+          stock_quantity,
+          min_quantity,
+          price,
+          location_id,
+          locations:location_id (Location)
         `);
 
       if (error) throw error;
 
-      const mappedProducts = (data || []).map((p: any) => ({
-        ...p,
-        quantity: p.stock_quantity,
-        min_quantity: p.min_quantity,
-        locationName: p.location?.Location
-          ? p.locations.Location.toLowerCase()
-          : '',
+      // Process products data
+      const processedProducts = (products || []).map((product: Product) => ({
+        ...product,
+        locationName: product.locations?.Location?.toLowerCase() || '',
       }));
 
-      const restaurantProducts = mappedProducts.filter(p => p.locationName === 'restaurant');
-      const bakeryProducts = mappedProducts.filter(p => p.locationName === 'bakery');
-      const lowStock = mappedProducts.filter(p => p.quantity <= p.min_quantity);
+      // Calculate statistics
+      const restaurantProducts = processedProducts.filter(p => p.locationName === 'restaurant');
+      const bakeryProducts = processedProducts.filter(p => p.locationName === 'bakery');
+      const lowStockProducts = processedProducts.filter(p => p.stock_quantity <= p.min_quantity);
 
-      const totalValue = mappedProducts.reduce(
-        (sum, p) => sum + ((Number(p.price) || 0) * (Number(p.quantity) || 0)), 0
-      );
-      const restaurantValue = restaurantProducts.reduce(
-        (sum, p) => sum + ((Number(p.price) || 0) * (Number(p.quantity) || 0)), 0
-      );
-      const bakeryValue = bakeryProducts.reduce(
-        (sum, p) => sum + ((Number(p.price) || 0) * (Number(p.quantity) || 0)), 0
-      );
+      const calculateTotalValue = (items: typeof processedProducts) => 
+        items.reduce((sum, p) => sum + (Number(p.price) || 0) * (Number(p.stock_quantity) || 0, 0);
 
-      setProducts(mappedProducts);
       setStats({
-        totalProducts: mappedProducts.length,
-        lowStockItems: lowStock.length,
+        totalProducts: processedProducts.length,
+        lowStockItems: lowStockProducts.length,
         restaurantItems: restaurantProducts.length,
         bakeryItems: bakeryProducts.length,
-        totalValue,
-        restaurantValue,
-        bakeryValue,
+        totalValue: calculateTotalValue(processedProducts),
+        restaurantValue: calculateTotalValue(restaurantProducts),
+        bakeryValue: calculateTotalValue(bakeryProducts),
       });
+
     } catch (error) {
-      setProducts([]);
+      console.error('Error loading dashboard data:', error);
       setStats({
         totalProducts: 0,
         lowStockItems: 0,
@@ -93,42 +107,60 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Inventory Dashboard</h1>
       </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProducts}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Low Stock Items</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.lowStockItems}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Restaurant Items</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.restaurantItems}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Bakery Items</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.bakeryItems}</div>
-          </CardContent>
-        </Card>
+        <DashboardCard 
+          title="Total Products" 
+          value={stats.totalProducts} 
+        />
+        <DashboardCard 
+          title="Low Stock Items" 
+          value={stats.lowStockItems} 
+          highlight={stats.lowStockItems > 0}
+        />
+        <DashboardCard 
+          title="Restaurant Items" 
+          value={stats.restaurantItems} 
+        />
+        <DashboardCard 
+          title="Bakery Items" 
+          value={stats.bakeryItems} 
+        />
+        <DashboardCard 
+          title="Total Inventory Value" 
+          value={`$${stats.totalValue.toFixed(2)}`} 
+        />
+        <DashboardCard 
+          title="Restaurant Value" 
+          value={`$${stats.restaurantValue.toFixed(2)}`} 
+        />
+        <DashboardCard 
+          title="Bakery Value" 
+          value={`$${stats.bakeryValue.toFixed(2)}`} 
+        />
       </div>
     </div>
+  );
+};
+
+// Helper component for dashboard cards
+const DashboardCard: React.FC<{
+  title: string;
+  value: string | number;
+  highlight?: boolean;
+}> = ({ title, value, highlight = false }) => {
+  return (
+    <Card className={highlight ? 'border-red-500 border-2' : ''}>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className={`text-2xl font-bold ${highlight ? 'text-red-500' : ''}`}>
+          {value}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
