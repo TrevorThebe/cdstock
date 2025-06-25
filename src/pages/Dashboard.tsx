@@ -63,7 +63,7 @@ export const Dashboard: React.FC = () => {
       }));
 
       // Calculate statistics
-      const restaurantProducts = processedProducts.filter(p => p.locationName === 'restaurant');
+      const restaurantProducts = processedProducts.filter(p => p.location === 'restaurant');
       const bakeryProducts = processedProducts.filter(p => p.location === 'bakery');
       const lowStockProducts = processedProducts.filter(p => p.stock_quantity <= p.min_quantity);
 
@@ -130,15 +130,15 @@ export const Dashboard: React.FC = () => {
         />
         <DashboardCard 
           title="Total Inventory Value" 
-          value={`$${stats.totalValue.toFixed(2)}`} 
+          value={`R{stats.totalValue.toFixed(2)}`} 
         />
         <DashboardCard 
           title="Restaurant Value" 
-          value={`$${stats.restaurantValue.toFixed(2)}`} 
+          value={`R{stats.restaurantValue.toFixed(2)}`} 
         />
         <DashboardCard 
           title="Bakery Value" 
-          value={`$${stats.bakeryValue.toFixed(2)}`} 
+          value={`R{stats.bakeryValue.toFixed(2)}`} 
         />
       </div>
     </div>
