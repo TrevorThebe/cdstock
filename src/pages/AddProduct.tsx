@@ -15,6 +15,11 @@ interface AddProductProps {
   onProductSaved: () => void;
 }
 
+interface Location {
+  id: string;
+  Location: string;
+}
+
 export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSaved }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -22,11 +27,41 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
     quantity: '',
     minQuantity: '',
     price: '',
-    location: 'restaurant' as 'restaurant' | 'bakery' // Changed default from 'locations' to 'restaurant'
+    location_id: '' // Changed from location to location_id
   });
+  const [locations, setLocations] = useState<Location[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
   const { toast } = useToast();
 
+  // Load locations from database
+  useEffect(() => {
+    const loadLocations = async () => {
+      setIsLoadingLocations(true);
+      try {
+        const { data, error } = await databaseService.getLocations();
+        if (error) throw error;
+        setLocations(data || []);
+        
+        // Set default location if available
+        if (data?.length) {
+          setFormData(prev => ({ ...prev, location_id: data[0].id }));
+        }
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to load locations',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoadingLocations(false);
+      }
+    };
+
+    loadLocations();
+  }, []);
+
+  // Initialize form with edit product data
   useEffect(() => {
     if (editProduct) {
       setFormData({
@@ -35,7 +70,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
         quantity: editProduct.stock_quantity?.toString() ?? '',
         minQuantity: editProduct.min_quantity?.toString() ?? '',
         price: editProduct.price?.toString() ?? '',
-        location: editProduct.location as 'restaurant' | 'bakery' // Added type assertion
+        location_id: editProduct.location_id // Use location_id instead of location
       });
     }
   }, [editProduct]);
@@ -46,20 +81,19 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.location_id) {
+      toast({
+        title: 'Error',
+        description: 'Please select a location',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Validate numeric fields
-      if (isNaN(parseInt(formData.quantity)) {
-        throw new Error('Quantity must be a number');
-      }
-      if (isNaN(parseInt(formData.minQuantity))) {
-        throw new Error('Minimum quantity must be a number');
-      }
-      if (isNaN(parseFloat(formData.price))) {
-        throw new Error('Price must be a number');
-      }
-
       const productData = {
         id: editProduct?.id || uuidv4(),
         name: formData.name,
@@ -67,7 +101,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
         stock_quantity: parseInt(formData.quantity),
         min_quantity: parseInt(formData.minQuantity),
         price: parseFloat(formData.price),
-        location: formData.location,
+        location_id: formData.location_id, // Save location_id instead of location name
         created_at: editProduct?.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -161,21 +195,25 @@ export const AddProduct: React.FC<AddProductProps> = ({ editProduct, onProductSa
             <div>
               <Label htmlFor="location">Location *</Label>
               <Select 
-                value={formData.location} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, location: value as 'restaurant' | 'bakery' }))}
+                value={formData.location_id} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, location_id: value }))}
+                disabled={isLoadingLocations}
                 required
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select location" />
+                  <SelectValue placeholder={isLoadingLocations ? "Loading locations..." : "Select location"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="restaurant">Restaurant</SelectItem>
-                  <SelectItem value="bakery">Bakery</SelectItem>
+                  {locations.map(location => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.Location}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex gap-4 pt-4">
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || isLoadingLocations}>
                 {isLoading ? 'Saving...' : editProduct ? 'Update Product' : 'Add Product'}
               </Button>
               <Button type="button" variant="outline" onClick={onProductSaved}>
