@@ -35,25 +35,25 @@ export const Dashboard: React.FC = () => {
 
       const mappedProducts = (data || []).map((p: any) => ({
         ...p,
-        quantity: p.stock_quantity,
+        stock_quantity: p.stock_quantity,
         min_quantity: p.min_quantity,
-        locationName: p.locations?.Location
+        locations: p.locations?.Location
           ? p.locations.Location.toLowerCase()
           : '',
       }));
 
-      const restaurantProducts = mappedProducts.filter(p => p.locationName === 'restaurant');
-      const bakeryProducts = mappedProducts.filter(p => p.locationName === 'bakery');
-      const lowStock = mappedProducts.filter(p => p.quantity <= p.min_quantity);
+      const restaurantProducts = mappedProducts.filter(p => p.locations === 'restaurant');
+      const bakeryProducts = mappedProducts.filter(p => p.locations === 'bakery');
+      const lowStock = mappedProducts.filter(p => p.stock_quantity <= p.min_quantity);
 
       const totalValue = mappedProducts.reduce(
-        (sum, p) => sum + ((Number(p.price) || 0) * (Number(p.quantity) || 0)), 0
+        (sum, p) => sum + ((Number(p.price) || 0) * (Number(p.stock_quantity) || 0)), 0
       );
       const restaurantValue = restaurantProducts.reduce(
-        (sum, p) => sum + ((Number(p.price) || 0) * (Number(p.quantity) || 0)), 0
+        (sum, p) => sum + ((Number(p.price) || 0) * (Number(p.stock_quantity) || 0)), 0
       );
       const bakeryValue = bakeryProducts.reduce(
-        (sum, p) => sum + ((Number(p.price) || 0) * (Number(p.quantity) || 0)), 0
+        (sum, p) => sum + ((Number(p.price) || 0) * (Number(p.stock_quantity) || 0)), 0
       );
 
       setProducts(mappedProducts);
