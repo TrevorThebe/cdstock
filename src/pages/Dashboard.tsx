@@ -8,7 +8,7 @@ interface Product {
   stock_quantity: number;
   min_quantity: number;
   price: number;
-  id: string;
+  location: string;
   locations: { Location: string } | null;
 }
 
