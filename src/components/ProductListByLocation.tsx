@@ -21,7 +21,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
           .eq('Location', locationName)
           .single();
 
-        if (locationError || !location) {
+        if (locationError || !Location) {
           throw new Error(locationError?.message || 'Location not found');
         } 
 
