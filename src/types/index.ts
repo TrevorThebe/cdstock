@@ -9,8 +9,31 @@ export interface User {
   createdAt: string;
   updatedAt: string;
 }
-
+// types.ts
 export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  stock_quantity: number;
+  min_quantity: number;
+  price: number;
+  location_id: string;
+  locations?: {
+    id: string;
+    Location: string;
+  };
+}
+
+export interface DashboardStats {
+  totalProducts: number;
+  lowStockItems: number;
+  restaurantItems: number;
+  bakeryItems: number;
+  totalValue: number;
+  restaurantValue: number;
+  bakeryValue: number;
+}
+/*export interface Product {
   id: string;
   name: string;
   description: string;
@@ -20,7 +43,7 @@ export interface Product {
   location: 'restaurant' | 'bakery';
   createdAt: string;
   updatedAt: string;
-}
+}*/
 
 export interface LoginRecord {
   id: string;
