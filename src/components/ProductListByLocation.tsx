@@ -172,7 +172,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
                       <span className="font-medium">Min Qty:</span> {product.min_quantity}
                     </div>
                     <div>
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-xs"> 
                         {product.locations?.Location || 'No Location'}
                       </Badge>
                     </div>
