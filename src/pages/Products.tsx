@@ -28,7 +28,7 @@ export const Products: React.FC = () => {
           *,
           locations (
             id,
-            Location_id
+            location_id
           )
         `)
         .order('created_at', { ascending: false });
