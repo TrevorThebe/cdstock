@@ -28,7 +28,7 @@ export const Products: React.FC = () => {
           *,
           locations (
             id,
-            Location
+            location_id
           )
         `)
         .order('created_at', { ascending: false });
@@ -52,7 +52,7 @@ export const Products: React.FC = () => {
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchTerm.toLowerCase());
     if (activeTab === 'all') return matchesSearch;
-    return matchesSearch && product.locations?.Location?.toLowerCase() === activeTab;
+    return matchesSearch && product.locations?.location_id?.toLowerCase() === activeTab;
   });
 
   const handleEditProduct = (product: any) => {
@@ -64,7 +64,7 @@ export const Products: React.FC = () => {
       price: product.price,
       quantity: product.stock_quantity,
       min_quantity: product.min_quantity,
-      location: product.location, // this is the location id
+      location: product.location_id, // this is the location id
     });
   };
 
@@ -89,7 +89,7 @@ export const Products: React.FC = () => {
         price: editForm.price,
         stock_quantity: editForm.quantity,
         min_quantity: editForm.min_quantity,
-        location: editForm.location, // this is the location id
+        location: editForm.location_id, // this is the location id
       };
 
       const { error } = await supabase
