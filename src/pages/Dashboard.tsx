@@ -9,7 +9,7 @@ interface Product {
   min_quantity: number;
   price: number;
   location: string;
-  locations: { Location: string } | null;
+  locations: { location_id: string } | null;
 }
 
 interface DashboardStats {
@@ -51,7 +51,7 @@ export const Dashboard: React.FC = () => {
           min_quantity,
           price,
           location,
-          locations:location (Location)
+          locations:location_id (location_id)
         `);
 
       if (error) throw error;
@@ -59,7 +59,7 @@ export const Dashboard: React.FC = () => {
       // Process products data
       const processedProducts = (products || []).map((product: Product) => ({
         ...product,
-        location: product.locations?.Location?.toLowerCase() || '',
+        location: product.locations?.Location_id?.toLowerCase() || '',
       }));
 
       // Calculate statistics
