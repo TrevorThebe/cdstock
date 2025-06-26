@@ -36,7 +36,7 @@ export const databaseService = {
       return false;
     }
   },
- 
+
   async getUserProfile(userId: string) {
     try {
       const { data, error } = await supabase
