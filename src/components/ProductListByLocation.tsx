@@ -17,7 +17,20 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
       setError(null);
       
       try {
-        // Get products with location information
+        // First get the location ID that matches the locationName
+        const { data: locationData, error: locationError } = await supabase
+          .from('locations')
+          .select('id')
+          .ilike('Location', locationName)
+          .single();
+
+        if (locationError) throw locationError;
+        if (!locationData) {
+          setProducts([]);
+          return;
+        }
+
+        // Then get products for this location
         const { data: productsData, error: productsError } = await supabase
           .from('products')
           .select(`
@@ -27,11 +40,10 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
               Location
             )
           `)
-          //.ilike('locations.Location', locationName)
+          .eq('location_id', locationData.id)
           .order('created_at', { ascending: false });
 
         if (productsError) throw productsError;
-
         setProducts(productsData || []);
       } catch (err) {
         console.error('Fetch error:', err);
@@ -46,10 +58,10 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
   }, [locationName]);
 
   const filteredProducts = products.filter(product => {
-    return (
+    const matchesSearch = 
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
 
   if (loading) {
@@ -84,7 +96,9 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
 
       {filteredProducts.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
-          No products found in {locationName}.
+          {products.length === 0 
+            ? `No products available in ${locationName}`
+            : `No products match your search in ${locationName}`}
         </div>
       )}
 
