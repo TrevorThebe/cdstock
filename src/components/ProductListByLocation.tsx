@@ -88,7 +88,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
 
       {filteredProducts.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
-          No product(s) found in {locationName}.
+          No products found in {locationName}.
         </div>
       )}
 
