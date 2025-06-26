@@ -99,7 +99,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
               <div className="mb-2">Quantity: {product.stock_quantity}</div>
               <div className="mb-2">Price: R{product.price}</div>
               <Badge className="text-xs">
-                {product.locations?.Location || 'Unknown Location'}
+                {product.locations?.Location || 'Unknown Locationsss'}
               </Badge>
               <div className="mb-2">Min Quantity: {product.min_quantity}</div>
             </CardContent>
