@@ -20,7 +20,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   onSuccess, 
   onCancel 
 }) => {
-  const [formData, setFormData] = useState<Omit<Product, 'id' | 'locations'>>({
+  const [formData, setFormData] = useState({
     name: '',
     description: '',
     stock_quantity: 0,
@@ -32,6 +32,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  // Load locations
   useEffect(() => {
     const fetchLocations = async () => {
       try {
@@ -44,16 +45,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         setLocations(data || []);
       } catch (error) {
         toast({
-          title: 'Error loading locations',
-          description: error instanceof Error ? error.message : 'Failed to fetch locations',
+          title: 'Error',
+          description: 'Failed to load locations',
           variant: 'destructive'
         });
       }
     };
-
     fetchLocations();
   }, []);
 
+  // Initialize form with product data
   useEffect(() => {
     if (product) {
       setFormData({
@@ -67,11 +68,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
   }, [product]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name.endsWith('quantity') || name === 'price' 
+      [name]: ['stock_quantity', 'min_quantity', 'price'].includes(name) 
         ? Number(value) 
         : value
     }));
@@ -82,34 +83,52 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     setLoading(true);
 
     try {
+      // Validate form
       if (!formData.name.trim()) {
         throw new Error('Product name is required');
       }
+      if (formData.price <= 0) {
+        throw new Error('Price must be greater than 0');
+      }
 
-      const productData = {
+      // Prepare update data
+      const updateData = {
         ...formData,
-        ...(product?.id && { id: product.id }),
         updated_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
-        .from('products')
-        .upsert(productData, { onConflict: 'id' });
+      let error;
+      
+      if (product?.id) {
+        // Update existing product
+        const { error: updateError } = await supabase
+          .from('products')
+          .update(updateData)
+          .eq('id', product.id);
+        error = updateError;
+      } else {
+        // Create new product
+        const { error: insertError } = await supabase
+          .from('products')
+          .insert(updateData);
+        error = insertError;
+      }
 
       if (error) throw error;
 
       toast({
         title: 'Success',
-        description: product ? 'Product updated successfully' : 'Product created successfully',
+        description: product ? 'Product updated!' : 'Product created!'
       });
-
       onSuccess();
+
     } catch (error) {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to save product',
         variant: 'destructive'
       });
+      console.error('Save error:', error);
     } finally {
       setLoading(false);
     }
@@ -119,76 +138,70 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>{product ? 'Edit Product' : 'Add New Product'}</CardTitle>
+          <CardTitle>{product ? 'Edit Product' : 'Add Product'}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="name">Product Name *</Label>
+              <Label>Product Name *</Label>
               <Input
-                id="name"
                 name="name"
                 value={formData.name}
-                onChange={handleInputChange}
+                onChange={handleChange}
                 required
-                minLength={2}
               />
             </div>
 
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label>Description</Label>
               <Textarea
-                id="description"
                 name="description"
                 value={formData.description}
-                onChange={handleInputChange}
+                onChange={handleChange}
                 rows={3}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="stock_quantity">Current Quantity *</Label>
+                <Label>Stock Quantity *</Label>
                 <Input
-                  id="stock_quantity"
                   name="stock_quantity"
                   type="number"
                   min="0"
                   value={formData.stock_quantity}
-                  onChange={handleInputChange}
+                  onChange={handleChange}
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="min_quantity">Minimum Quantity *</Label>
+                <Label>Min Quantity *</Label>
                 <Input
-                  id="min_quantity"
                   name="min_quantity"
                   type="number"
                   min="0"
                   value={formData.min_quantity}
-                  onChange={handleInputChange}
+                  onChange={handleChange}
                   required
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="price">Price (R) *</Label>
+              <Label>Price (R) *</Label>
               <Input
-                id="price"
                 name="price"
                 type="number"
                 step="0.01"
                 min="0.01"
                 value={formData.price}
-                onChange={handleInputChange}
+                onChange={handleChange}
                 required
               />
             </div>
 
             <div>
-              <Label htmlFor="location_id">Location *</Label>
+              <Label>Location *</Label>
               <Select
                 value={formData.location_id}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, location_id: value }))}
@@ -217,7 +230,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Saving...' : product ? 'Update Product' : 'Add Product'}
+                {loading ? 'Saving...' : product ? 'Update' : 'Create'}
               </Button>
             </div>
           </form>
