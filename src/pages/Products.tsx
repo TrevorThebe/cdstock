@@ -238,7 +238,7 @@ export const Products: React.FC = () => {
                     <option key={loc.id} value={loc.id}>
                       {loc.Location}
                     </option>
-                  ))}
+                  ))} 
                 </select>
               </div>
               <div className="flex justify-end gap-2">
