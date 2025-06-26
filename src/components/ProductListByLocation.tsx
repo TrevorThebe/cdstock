@@ -17,20 +17,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
       setError(null);
       
       try {
-        // First get the location ID that matches the locationName
-        const { data: locationData, error: locationError } = await supabase
-          .from('locations')
-          .select('id')
-          .ilike('Location', locationName)
-          .single();
-
-        if (locationError) throw locationError;
-        if (!locationData) {
-          setProducts([]);
-          return;
-        }
-
-        // Then get products for this location
+        // Get products with their locations
         const { data: productsData, error: productsError } = await supabase
           .from('products')
           .select(`
@@ -40,11 +27,16 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
               Location
             )
           `)
-          .eq('location_id', locationData.id)
           .order('created_at', { ascending: false });
 
         if (productsError) throw productsError;
-        setProducts(productsData || []);
+
+        // Filter products by locationName on the client side
+        const filtered = productsData?.filter(product => 
+          product.locations?.Location?.toLowerCase() === locationName.toLowerCase()
+        ) || [];
+
+        setProducts(filtered);
       } catch (err) {
         console.error('Fetch error:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -58,10 +50,10 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
   }, [locationName]);
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = 
+    return (
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   });
 
   if (loading) {
@@ -96,9 +88,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
 
       {filteredProducts.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
-          {products.length === 0 
-            ? `No products available in ${locationName}`
-            : `No products match your search in ${locationName}`}
+          No products found in {locationName}.
         </div>
       )}
 
