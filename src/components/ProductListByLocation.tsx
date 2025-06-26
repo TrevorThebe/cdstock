@@ -14,7 +14,7 @@ interface Product {
   min_quantity: number;
   locations: {
     id: string;
-    Location: string;
+    location_id: string;
   } | null;
 }
 
@@ -39,11 +39,11 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
         const { data: locationData, error: locationError } = await supabase
           .from('locations')
           .select('id')
-          .ilike('Location', `%${locationName}%`)
+          .ilike('location_id', `%${locationName}%`)
           .single();
 
         if (locationError || !locationData) {
-          throw new Error(`Location "${locationName}" not found`);
+          throw new Error(`location_id "${locationName}" not found`);
         }
 
         // Step 2: Get products for this location
@@ -53,7 +53,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
             *,
             locations (
               id,
-              Location
+              location_id
             )
           `)
           .eq('location_id', locationData.id)
@@ -173,7 +173,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
                     </div>
                     <div>
                       <Badge variant="outline" className="text-xs"> 
-                        {product.locations?.Location || 'No Location'}
+                        {product.locations?.location_id || 'No Location'}
                       </Badge>
                     </div>
                   </div>
