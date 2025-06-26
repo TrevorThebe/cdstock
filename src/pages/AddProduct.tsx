@@ -26,8 +26,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
     stock_quantity: 0,
     min_quantity: 0,
     price: 0,
-    location: '' // Using location ID as string
+    location_id: ''
   });
+
   const [locations, setLocations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingLocations, setIsLoadingLocations] = useState(false);
@@ -38,13 +39,17 @@ export const AddProduct: React.FC<AddProductProps> = ({
     const loadLocations = async () => {
       setIsLoadingLocations(true);
       try {
-        const { data, error } = await supabase.from('locations').select('*');
+        const { data, error } = await supabase
+          .from('locations')
+          .select('*')
+          .order('Location', { ascending: true });
+
         if (error) throw error;
         setLocations(data || []);
       } catch (error) {
         toast({
-          title: 'Error',
-          description: 'Failed to load locations',
+          title: 'Error loading locations',
+          description: error instanceof Error ? error.message : 'Failed to fetch locations',
           variant: 'destructive'
         });
       } finally {
@@ -64,7 +69,16 @@ export const AddProduct: React.FC<AddProductProps> = ({
         stock_quantity: editProduct.stock_quantity || 0,
         min_quantity: editProduct.min_quantity || 0,
         price: editProduct.price || 0,
-        location: editProduct.location || '' // Using location ID
+        location_id: editProduct.location_id || (editProduct as any).location || ''
+      });
+    } else {
+      setFormData({
+        name: '',
+        description: '',
+        stock_quantity: 0,
+        min_quantity: 0,
+        price: 0,
+        location_id: ''
       });
     }
   }, [editProduct]);
@@ -74,17 +88,51 @@ export const AddProduct: React.FC<AddProductProps> = ({
     setFormData(prev => ({
       ...prev,
       [name]: name === 'stock_quantity' || name === 'min_quantity' || name === 'price'
-        ? Number(value)
+        ? Math.max(0, Number(value)) // Ensure non-negative numbers
         : value
     }));
   };
 
   const handleLocationChange = (value: string) => {
-    setFormData(prev => ({ ...prev, location: value }));
+    setFormData(prev => ({ ...prev, location_id: value }));
+  };
+
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Product name is required',
+        variant: 'destructive'
+      });
+      return false;
+    }
+
+    if (formData.price <= 0) {
+      toast({
+        title: 'Validation Error',
+        description: 'Price must be greater than 0',
+        variant: 'destructive'
+      });
+      return false;
+    }
+
+    if (!formData.location_id) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select a location',
+        variant: 'destructive'
+      });
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) return;
+    
     setIsLoading(true);
 
     try {
@@ -95,14 +143,13 @@ export const AddProduct: React.FC<AddProductProps> = ({
         stock_quantity: formData.stock_quantity,
         min_quantity: formData.min_quantity,
         price: formData.price,
-        location: formData.location, // Using location ID
+        location_id: formData.location_id,
         updated_at: new Date().toISOString(),
       };
 
-      // Use upsert to handle both insert and update
       const { error } = await supabase
         .from('products')
-        .upsert(productData);
+        .upsert(productData, { onConflict: 'id' });
 
       if (error) throw error;
 
@@ -110,11 +157,24 @@ export const AddProduct: React.FC<AddProductProps> = ({
         title: 'Success', 
         description: `Product ${editProduct ? 'updated' : 'added'} successfully`,
       });
+
+      if (!editProduct) {
+        setFormData({
+          name: '',
+          description: '',
+          stock_quantity: 0,
+          min_quantity: 0,
+          price: 0,
+          location_id: ''
+        });
+      }
+
       onProductSaved();
     } catch (error) {
+      console.error('Save error:', error);
       toast({ 
         title: 'Error', 
-        description: 'Failed to save product',
+        description: error instanceof Error ? error.message : 'Failed to save product',
         variant: 'destructive' 
       });
     } finally {
@@ -131,106 +191,108 @@ export const AddProduct: React.FC<AddProductProps> = ({
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="name">Product Name *</Label>
-                <Input 
-                  id="name" 
-                  name="name" 
-                  value={formData.name} 
-                  onChange={handleInputChange} 
-                  required 
-                  minLength={2}
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea 
-                  id="description" 
-                  name="description" 
-                  value={formData.description} 
-                  onChange={handleInputChange} 
-                  rows={3}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+              <fieldset disabled={isLoading || isLoadingLocations} className="space-y-4">
                 <div>
-                  <Label htmlFor="stock_quantity">Current Quantity *</Label>
+                  <Label htmlFor="name">Product Name *</Label>
                   <Input 
-                    id="stock_quantity" 
-                    name="stock_quantity" 
+                    id="name" 
+                    name="name" 
+                    value={formData.name} 
+                    onChange={handleInputChange} 
+                    required 
+                    minLength={2}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea 
+                    id="description" 
+                    name="description" 
+                    value={formData.description} 
+                    onChange={handleInputChange} 
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="stock_quantity">Current Quantity *</Label>
+                    <Input 
+                      id="stock_quantity" 
+                      name="stock_quantity" 
+                      type="number" 
+                      min="0"
+                      step="1"
+                      value={formData.stock_quantity} 
+                      onChange={handleInputChange} 
+                      required 
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="min_quantity">Minimum Quantity *</Label>
+                    <Input 
+                      id="min_quantity" 
+                      name="min_quantity" 
+                      type="number" 
+                      min="0"
+                      step="1"
+                      value={formData.min_quantity} 
+                      onChange={handleInputChange} 
+                      required 
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="price">Price (R) *</Label>
+                  <Input 
+                    id="price" 
+                    name="price" 
                     type="number" 
-                    min="0"
-                    value={formData.stock_quantity} 
+                    step="0.01" 
+                    min="0.01"
+                    value={formData.price} 
                     onChange={handleInputChange} 
                     required 
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="min_quantity">Minimum Quantity *</Label>
-                  <Input 
-                    id="min_quantity" 
-                    name="min_quantity" 
-                    type="number" 
-                    min="0"
-                    value={formData.min_quantity} 
-                    onChange={handleInputChange} 
-                    required 
-                  />
+                  <Label htmlFor="location">Location *</Label>
+                  <Select 
+                    value={formData.location_id} 
+                    onValueChange={handleLocationChange}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={isLoadingLocations ? "Loading locations..." : "Select location"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map(location => (
+                        <SelectItem key={location.id} value={location.id}>
+                          {location.Location}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-              <div>
-                <Label htmlFor="price">Price *</Label>
-                <Input 
-                  id="price" 
-                  name="price" 
-                  type="number" 
-                  step="0.01" 
-                  min="0"
-                  value={formData.price} 
-                  onChange={handleInputChange} 
-                  required 
-                />
-              </div>
-              <div>
-                <Label htmlFor="location">Location *</Label>
-                <Select 
-                  value={formData.location} 
-                  onValueChange={handleLocationChange}
-                  disabled={isLoadingLocations}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={isLoadingLocations ? "Loading locations..." : "Select location"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map(location => (
-                      <SelectItem key={location.id} value={location.id}>
-                        {location.Location}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end gap-2 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={onCancel}
-                  disabled={isLoading}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={isLoading || isLoadingLocations}
-                >
-                  {isLoading 
-                    ? 'Saving...' 
-                    : editProduct 
-                      ? 'Update Product' 
-                      : 'Add Product'}
-                </Button>
-              </div>
+
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={onCancel}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    {isLoading 
+                      ? (editProduct ? 'Updating...' : 'Adding...')
+                      : (editProduct ? 'Update Product' : 'Add Product')}
+                  </Button>
+                </div>
+              </fieldset>
             </form>
           </CardContent>
         </Card>
