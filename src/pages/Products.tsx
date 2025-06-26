@@ -227,8 +227,8 @@ export const Products: React.FC = () => {
               <div>
                 <label>Location</label>
                 <select
-                  name="location"
-                  value={editForm.location}
+                  name="location_id"
+                  value={editForm.location_id}
                   onChange={handleEditFormChange}
                   required
                   className="w-full border rounded px-2 py-1"
@@ -236,7 +236,7 @@ export const Products: React.FC = () => {
                   <option value="">Select a location</option>
                   {locations.map(loc => (
                     <option key={loc.id} value={loc.id}>
-                      {loc.Location}
+                      {loc.location_id}
                     </option>
                   ))} 
                 </select>
