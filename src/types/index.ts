@@ -10,6 +10,19 @@ export interface User {
   updatedAt: string;
 }
 // types.ts
+/*export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  stock_quantity: number;
+  min_quantity: number;
+  price: number;
+  location_id: string;
+  locations?: {
+    id: string;
+    Location: string;
+  };
+}*/
 export interface Product {
   id: string;
   name: string;
@@ -18,6 +31,8 @@ export interface Product {
   min_quantity: number;
   price: number;
   location_id: string;
+  created_at?: string;
+  updated_at?: string;
   locations?: {
     id: string;
     Location: string;
