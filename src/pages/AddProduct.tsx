@@ -289,7 +289,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   <Button type="submit">
                     {isLoading 
                       ? (editProduct ? 'Updating...' : 'Adding...')
-                      : (editProduct ? 'Update Product' : 'Add Product')}
+                      : (editProduct ? 'Update Product' : 'Add Products')}
                   </Button>
                 </div>
               </fieldset>
