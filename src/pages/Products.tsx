@@ -4,15 +4,45 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/ui/use-toast';
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  stock_quantity: number;
+  min_quantity: number;
+  location_id: string;
+  locations?: {
+    id: string;
+    location_id: string;
+  };
+}
+
+interface Location {
+  id: string;
+  location_id: string;
+}
 
 export const Products: React.FC = () => {
-  const [products, setProducts] = useState<any[]>([]);
-  const [locations, setLocations] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'restaurant' | 'bakery'>('all');
   const [loading, setLoading] = useState(true);
-  const [editingProduct, setEditingProduct] = useState<any | null>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editForm, setEditForm] = useState<Omit<Product, 'locations'>>({
+    id: '',
+    name: '',
+    description: '',
+    price: 0,
+    stock_quantity: 0,
+    min_quantity: 0,
+    location_id: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     loadProducts();
@@ -36,15 +66,25 @@ export const Products: React.FC = () => {
       if (error) throw error;
       setProducts(data || []);
     } catch (error) {
-      setProducts([]);
+      console.error('Error loading products:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load products',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const loadLocations = async () => {
-    const { data, error } = await supabase.from('locations').select('*');
-    if (!error) setLocations(data || []);
+    try {
+      const { data, error } = await supabase.from('locations').select('*');
+      if (error) throw error;
+      setLocations(data || []);
+    } catch (error) {
+      console.error('Error loading locations:', error);
+    }
   };
 
   const filteredProducts = products.filter(product => {
@@ -55,16 +95,16 @@ export const Products: React.FC = () => {
     return matchesSearch && product.locations?.location_id?.toLowerCase() === activeTab;
   });
 
-  const handleEditProduct = (product: any) => {
+  const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setEditForm({
       id: product.id,
       name: product.name,
-      description: product.description,
+      description: product.description || '',
       price: product.price,
-      quantity: product.stock_quantity,
+      stock_quantity: product.stock_quantity,
       min_quantity: product.min_quantity,
-      location_id: product.location_id, // this is the location id
+      location_id: product.locations?.id || product.location_id,
     });
   };
 
@@ -72,7 +112,7 @@ export const Products: React.FC = () => {
     const { name, value } = e.target;
     setEditForm(prev => ({
       ...prev,
-      [name]: name === 'quantity' || name === 'min_quantity' || name === 'price'
+      [name]: name === 'stock_quantity' || name === 'min_quantity' || name === 'price'
         ? Number(value)
         : value
     }));
@@ -81,27 +121,39 @@ export const Products: React.FC = () => {
   const handleEditFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
+    
+    setIsSubmitting(true);
     try {
-      const updatedProduct = {
-        id: editForm.id,
-        name: editForm.name,
-        description: editForm.description,
-        price: editForm.price,
-        stock_quantity: editForm.quantity,
-        min_quantity: editForm.min_quantity,
-        location_id: editForm.location_id, // this is the location id
-      };
-
       const { error } = await supabase
         .from('products')
-        .upsert(updatedProduct);
+        .update({
+          name: editForm.name,
+          description: editForm.description,
+          price: editForm.price,
+          stock_quantity: editForm.stock_quantity,
+          min_quantity: editForm.min_quantity,
+          location_id: editForm.location_id,
+        })
+        .eq('id', editForm.id);
 
       if (error) throw error;
 
+      toast({
+        title: 'Success',
+        description: 'Product updated successfully',
+      });
+      
       await loadProducts();
       setEditingProduct(null);
     } catch (error) {
-      // Handle error as needed
+      console.error('Error updating product:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update product',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -157,9 +209,9 @@ export const Products: React.FC = () => {
             <CardContent>
               <div className="mb-2">{product.description}</div>
               <div className="mb-2">Quantity: {product.stock_quantity}</div>
-              <div className="mb-2">Price: R{product.price}</div>
-              <Badge className="text-xs">
-                {product.locations?.Location || 'Unknown Location'}
+              <div className="mb-2">Price: R{product.price.toFixed(2)}</div>
+              <Badge className="text-xs mb-2">
+                {product.locations?.location_id || 'Unknown Location'}
               </Badge>
               <div className="mb-2">Min Quantity: {product.min_quantity}</div>
               <div className="mt-2">
@@ -178,7 +230,7 @@ export const Products: React.FC = () => {
             <h2 className="text-xl font-bold mb-4">Edit Product</h2>
             <form onSubmit={handleEditFormSubmit} className="space-y-4">
               <div>
-                <label>Name</label>
+                <label className="block text-sm font-medium mb-1">Name</label>
                 <Input
                   name="name"
                   value={editForm.name}
@@ -187,7 +239,7 @@ export const Products: React.FC = () => {
                 />
               </div>
               <div>
-                <label>Description</label>
+                <label className="block text-sm font-medium mb-1">Description</label>
                 <Input
                   name="description"
                   value={editForm.description}
@@ -195,43 +247,47 @@ export const Products: React.FC = () => {
                 />
               </div>
               <div>
-                <label>Price</label>
+                <label className="block text-sm font-medium mb-1">Price</label>
                 <Input
                   name="price"
                   type="number"
+                  min="0"
+                  step="0.01"
                   value={editForm.price}
                   onChange={handleEditFormChange}
                   required
                 />
               </div>
               <div>
-                <label>Quantity</label>
+                <label className="block text-sm font-medium mb-1">Quantity</label>
                 <Input
-                  name="quantity"
+                  name="stock_quantity"
                   type="number"
-                  value={editForm.quantity}
+                  min="0"
+                  value={editForm.stock_quantity}
                   onChange={handleEditFormChange}
                   required
                 />
               </div>
               <div>
-                <label>Min Quantity</label>
+                <label className="block text-sm font-medium mb-1">Min Quantity</label>
                 <Input
                   name="min_quantity"
                   type="number"
+                  min="0"
                   value={editForm.min_quantity}
                   onChange={handleEditFormChange}
                   required
                 />
               </div>
               <div>
-                <label>Location</label>
+                <label className="block text-sm font-medium mb-1">Location</label>
                 <select
                   name="location_id"
                   value={editForm.location_id}
                   onChange={handleEditFormChange}
                   required
-                  className="w-full border rounded px-2 py-1"
+                  className="w-full border rounded px-3 py-2 text-sm"
                 >
                   <option value="">Select a location</option>
                   {locations.map(loc => (
@@ -241,11 +297,18 @@ export const Products: React.FC = () => {
                   ))} 
                 </select>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setEditingProduct(null)}>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setEditingProduct(null)}
+                  disabled={isSubmitting}
+                >
                   Cancel
                 </Button>
-                <Button type="submit">Save</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Saving...' : 'Save'}
+                </Button>
               </div>
             </form>
           </div>
