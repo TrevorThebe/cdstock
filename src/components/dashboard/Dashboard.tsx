@@ -116,7 +116,7 @@ export const Dashboard: React.FC = () => {
 
       {currentUser && (
         <Card>
-          <CardHeader>
+          <CardHeader> 
             <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-3">
               <Avatar className="h-10 w-10 lg:h-12 lg:w-12">
                 <AvatarImage src={currentUser.avatar_url} />
