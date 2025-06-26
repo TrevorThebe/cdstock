@@ -1,256 +1,228 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { Product } from '@/types';
 
-export const Products: React.FC = () => {
-  const [products, setProducts] = useState<any[]>([]);
+interface ProductFormProps {
+  product: Product | null;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+export const ProductForm: React.FC<ProductFormProps> = ({ 
+  product, 
+  onSuccess, 
+  onCancel 
+}) => {
+  const [formData, setFormData] = useState<Omit<Product, 'id' | 'locations'>>({
+    name: '',
+    description: '',
+    stock_quantity: 0,
+    min_quantity: 0,
+    price: 0,
+    location_id: ''
+  });
   const [locations, setLocations] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'restaurant' | 'bakery'>('all');
-  const [loading, setLoading] = useState(true);
-  const [editingProduct, setEditingProduct] = useState<any | null>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    loadProducts();
-    loadLocations();
+    const fetchLocations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('locations')
+          .select('*')
+          .order('Location', { ascending: true });
+
+        if (error) throw error;
+        setLocations(data || []);
+      } catch (error) {
+        toast({
+          title: 'Error loading locations',
+          description: error instanceof Error ? error.message : 'Failed to fetch locations',
+          variant: 'destructive'
+        });
+      }
+    };
+
+    fetchLocations();
   }, []);
 
-  const loadProducts = async () => {
+  useEffect(() => {
+    if (product) {
+      setFormData({
+        name: product.name,
+        description: product.description || '',
+        stock_quantity: product.stock_quantity,
+        min_quantity: product.min_quantity,
+        price: product.price,
+        location_id: product.location_id
+      });
+    }
+  }, [product]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name.endsWith('quantity') || name === 'price' 
+        ? Number(value) 
+        : value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
+
     try {
-      const { data, error } = await supabase
+      if (!formData.name.trim()) {
+        throw new Error('Product name is required');
+      }
+
+      const productData = {
+        ...formData,
+        ...(product?.id && { id: product.id }),
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
         .from('products')
-        .select(`
-          *,
-          locations (
-            id,
-            location_id
-          )
-        `)
-        .order('created_at', { ascending: false });
+        .upsert(productData, { onConflict: 'id' });
 
       if (error) throw error;
-      setProducts(data || []);
+
+      toast({
+        title: 'Success',
+        description: product ? 'Product updated successfully' : 'Product created successfully',
+      });
+
+      onSuccess();
     } catch (error) {
-      setProducts([]);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to save product',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const loadLocations = async () => {
-    const { data, error } = await supabase.from('locations').select('*');
-    if (!error) setLocations(data || []);
-  };
-
-  const filteredProducts = products.filter(product => {
-    const matchesSearch =
-      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    if (activeTab === 'all') return matchesSearch;
-    return matchesSearch && product.locations?.location_id?.toLowerCase() === activeTab;
-  });
-
-  const handleEditProduct = (product: any) => {
-    setEditingProduct(product);
-    setEditForm({
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      quantity: product.stock_quantity,
-      min_quantity: product.min_quantity,
-      location: product.location_id, // this is the location id
-    });
-  };
-
-  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setEditForm(prev => ({
-      ...prev,
-      [name]: name === 'quantity' || name === 'min_quantity' || name === 'price'
-        ? Number(value)
-        : value
-    }));
-  };
-
-  const handleEditFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingProduct) return;
-    try {
-      const updatedProduct = {
-        id: editForm.id,
-        name: editForm.name,
-        description: editForm.description,
-        price: editForm.price,
-        stock_quantity: editForm.quantity,
-        min_quantity: editForm.min_quantity,
-        location: editForm.location_id, // this is the location id
-      };
-
-      const { error } = await supabase
-        .from('products')
-        .upsert(updatedProduct);
-
-      if (error) throw error;
-
-      await loadProducts();
-      setEditingProduct(null);
-    } catch (error) {
-      // Handle error as needed
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="p-6 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl lg:text-3xl font-bold">Products</h1>
-        <div className="relative w-full sm:w-64">
-          <Input
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="pl-4"
-          />
-        </div>
-      </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>{product ? 'Edit Product' : 'Add New Product'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Product Name *</Label>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                minLength={2}
+              />
+            </div>
 
-      <div className="flex gap-2 mb-6">
-        <Button
-          variant={activeTab === 'all' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('all')}
-        >All</Button>
-        <Button
-          variant={activeTab === 'restaurant' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('restaurant')}
-        >Restaurant</Button>
-        <Button
-          variant={activeTab === 'bakery' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('bakery')}
-        >Bakery</Button>
-      </div>
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows={3}
+              />
+            </div>
 
-      {filteredProducts.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
-          No products found.
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filteredProducts.map(product => (
-          <Card key={product.id}>
-            <CardHeader>
-              <CardTitle>{product.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-2">{product.description}</div>
-              <div className="mb-2">Quantity: {product.stock_quantity}</div>
-              <div className="mb-2">Price: R{product.price}</div>
-              <Badge className="text-xs">
-                {product.locations?.Location || 'Unknown Location'}
-              </Badge>
-              <div className="mb-2">Min Quantity: {product.min_quantity}</div>
-              <div className="mt-2">
-                <Button size="sm" onClick={() => handleEditProduct(product)}>
-                  Edit
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Edit Product</h2>
-            <form onSubmit={handleEditFormSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label>Name</label>
+                <Label htmlFor="stock_quantity">Current Quantity *</Label>
                 <Input
-                  name="name"
-                  value={editForm.name}
-                  onChange={handleEditFormChange}
-                  required
-                />
-              </div>
-              <div>
-                <label>Description</label>
-                <Input
-                  name="description"
-                  value={editForm.description}
-                  onChange={handleEditFormChange}
-                />
-              </div>
-              <div>
-                <label>Price</label>
-                <Input
-                  name="price"
+                  id="stock_quantity"
+                  name="stock_quantity"
                   type="number"
-                  value={editForm.price}
-                  onChange={handleEditFormChange}
+                  min="0"
+                  value={formData.stock_quantity}
+                  onChange={handleInputChange}
                   required
                 />
               </div>
               <div>
-                <label>Quantity</label>
+                <Label htmlFor="min_quantity">Minimum Quantity *</Label>
                 <Input
-                  name="quantity"
-                  type="number"
-                  value={editForm.quantity}
-                  onChange={handleEditFormChange}
-                  required
-                />
-              </div>
-              <div>
-                <label>Min Quantity</label>
-                <Input
+                  id="min_quantity"
                   name="min_quantity"
                   type="number"
-                  value={editForm.min_quantity}
-                  onChange={handleEditFormChange}
+                  min="0"
+                  value={formData.min_quantity}
+                  onChange={handleInputChange}
                   required
                 />
               </div>
-              <div>
-                <label>Location</label>
-                <select
-                  name="location"
-                  value={editForm.location}
-                  onChange={handleEditFormChange}
-                  required
-                  className="w-full border rounded px-2 py-1"
-                >
-                  <option value="">Select a location</option>
-                  {locations.map(loc => (
-                    <option key={loc.id} value={loc.id}>
-                      {loc.Location}
-                    </option>
+            </div>
+
+            <div>
+              <Label htmlFor="price">Price (R) *</Label>
+              <Input
+                id="price"
+                name="price"
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={formData.price}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="location_id">Location *</Label>
+              <Select
+                value={formData.location_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, location_id: value }))}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map(location => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.Location}
+                    </SelectItem>
                   ))}
-                </select>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setEditingProduct(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit">Save</Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Saving...' : product ? 'Update Product' : 'Add Product'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };
