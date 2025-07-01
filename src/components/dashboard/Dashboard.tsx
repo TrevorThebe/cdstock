@@ -33,8 +33,8 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const restaurantProducts = products.filter(p => p.location === 'restaurant');
-  const bakeryProducts = products.filter(p => p.location === 'bakery');
+  const restaurantProducts = products.filter(p => p.location_id === 'restaurant');
+  const bakeryProducts = products.filter(p => p.location_id === 'bakery');
   const lowStockCount = products.filter(p => p.quantity <= p.minQuantity).length;
 
   if (loading) {
