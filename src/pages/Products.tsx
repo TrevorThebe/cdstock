@@ -292,7 +292,7 @@ export const Products: React.FC = () => {
                   <option value="">Select a location</option>
                   {locations.map(loc => (
                     <option key={loc.id} value={loc.id}>
-                      {loc.location_id}
+                      {loc.lLcation}
                     </option>
                   ))} 
                 </select>
