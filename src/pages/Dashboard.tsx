@@ -51,7 +51,7 @@ export const Dashboard: React.FC = () => {
           min_quantity,
           price,
           location,
-          locations:location_id (location)
+          locations:location_id (location_id)
         `);
 
       if (error) throw error;
