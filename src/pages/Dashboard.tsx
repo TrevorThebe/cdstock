@@ -13,6 +13,7 @@ export const Dashboard: React.FC = () => {
     restaurantValue: 0,
     bakeryValue: 0
   });
+  /*Trevor Update*/
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
