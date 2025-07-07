@@ -14,7 +14,7 @@ interface Product {
   min_quantity: number;
   locations: {
     id: string;
-    location_id: string;
+    location: string;
   } | null;
 }
 
@@ -53,7 +53,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
             *,
             locations (
               id,
-              location_id
+              location
             )
           `)
           .eq('location_id', locationData.id)
