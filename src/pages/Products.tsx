@@ -16,13 +16,13 @@ interface Product {
   location_id: string;
   locations?: {
     id: string;
-    location_id: string;
+    location: string;
   };
 }
 
 interface Location {
   id: string;
-  location_id: string;
+  location: string;
 }
 
 export const Products: React.FC = () => {
@@ -39,7 +39,7 @@ export const Products: React.FC = () => {
     price: 0,
     stock_quantity: 0,
     min_quantity: 0,
-    location_id: ''
+    location: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -58,7 +58,7 @@ export const Products: React.FC = () => {
           *,
           locations (
             id,
-            location_id
+            location
           )
         `)
         .order('created_at', { ascending: false });
@@ -104,7 +104,7 @@ export const Products: React.FC = () => {
       price: product.price,
       stock_quantity: product.stock_quantity,
       min_quantity: product.min_quantity,
-      location_id: product.locations?.id || product.location_id,
+      location: product.locations?.id || product.location,
     });
   };
 
@@ -132,7 +132,7 @@ export const Products: React.FC = () => {
           price: editForm.price,
           stock_quantity: editForm.stock_quantity,
           min_quantity: editForm.min_quantity,
-          location_id: editForm.location_id,
+          location: editForm.location,
         })
         .eq('id', editForm.id);
 
