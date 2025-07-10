@@ -43,7 +43,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
           .single();
 
         if (locationError || !locationData) {
-          throw new Error(`location_id "${locationName}" not found`);
+          throw new Error(`location "${locationName}" not found`);
         }
 
         // Step 2: Get products for this location
