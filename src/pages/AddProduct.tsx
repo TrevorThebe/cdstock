@@ -69,7 +69,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         stock_quantity: editProduct.stock_quantity || 0,
         min_quantity: editProduct.min_quantity || 0,
         price: editProduct.price || 0,
-        location_id: editProduct.location || (editProduct as any).location || ''
+        location: editProduct.location || (editProduct as any).location || ''
       });
     } else {
       setFormData({
