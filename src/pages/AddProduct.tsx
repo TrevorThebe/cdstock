@@ -26,7 +26,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
     stock_quantity: 0,
     min_quantity: 0,
     price: 0,
-    location_id: ''
+    location: ''
   });
 
   const [locations, setLocations] = useState<any[]>([]);
@@ -42,7 +42,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         const { data, error } = await supabase
           .from('locations')
           .select('*')
-          .order('Location', { ascending: true });
+          .order('location', { ascending: true });
 
         if (error) throw error;
         setLocations(data || []);
@@ -69,7 +69,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         stock_quantity: editProduct.stock_quantity || 0,
         min_quantity: editProduct.min_quantity || 0,
         price: editProduct.price || 0,
-        location_id: editProduct.location_id || (editProduct as any).location || ''
+        location_id: editProduct.location || (editProduct as any).location || ''
       });
     } else {
       setFormData({
@@ -78,7 +78,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         stock_quantity: 0,
         min_quantity: 0,
         price: 0,
-        location_id: ''
+        location: ''
       });
     }
   }, [editProduct]);
@@ -94,7 +94,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
   };
 
   const handleLocationChange = (value: string) => {
-    setFormData(prev => ({ ...prev, location_id: value }));
+    setFormData(prev => ({ ...prev, location: value }));
   };
 
   const validateForm = () => {
@@ -143,7 +143,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         stock_quantity: formData.stock_quantity,
         min_quantity: formData.min_quantity,
         price: formData.price,
-        location_id: formData.location_id,
+        location: formData.location,
         updated_at: new Date().toISOString(),
       };
 
@@ -165,7 +165,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
           stock_quantity: 0,
           min_quantity: 0,
           price: 0,
-          location_id: ''
+          location: ''
         });
       }
 
@@ -261,7 +261,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 <div>
                   <Label htmlFor="location">Location *</Label>
                   <Select 
-                    value={formData.location_id} 
+                    value={formData.location} 
                     onValueChange={handleLocationChange}
                     required
                   >
@@ -271,7 +271,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                     <SelectContent>
                       {locations.map(location => (
                         <SelectItem key={location.id} value={location.id}>
-                          {location.Location}
+                          {location.location}
                         </SelectItem>
                       ))}
                     </SelectContent>
