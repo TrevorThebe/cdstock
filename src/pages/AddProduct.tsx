@@ -116,7 +116,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
       return false;
     }
 
-    if (!formData.location_id) {
+    if (!formData.location) {
       toast({
         title: 'Validation Error',
         description: 'Please select a location',
