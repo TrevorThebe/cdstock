@@ -63,7 +63,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
         title: formData.title,
         message: formData.message,
         type: formData.type,
-        sender_id: currentUser?.id
+        sender_id: currentUser?.user_id
       })) || [];
 
       const { error } = await supabase
