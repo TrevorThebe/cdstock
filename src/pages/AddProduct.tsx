@@ -34,7 +34,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
   const [isLoadingLocations, setIsLoadingLocations] = useState(false);
   const { toast } = useToast();
 
-  // Load locations from database
+  // Load locations from databaseThebe
   useEffect(() => {
     const loadLocations = async () => {
       setIsLoadingLocations(true);
