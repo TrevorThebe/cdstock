@@ -84,7 +84,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
   }, [locationName]);
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = 
+    const matchesSearch =
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
@@ -105,8 +105,8 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
         <div className="text-center text-red-500">
           Error loading products: {error}
         </div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => window.location.reload()}
           className="mx-auto"
         >
@@ -172,7 +172,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
                       <span className="font-medium">Min Qty:</span> {product.min_quantity}
                     </div>
                     <div>
-                      <Badge variant="outline" className="text-xs"> 
+                      <Badge variant="outline" className="text-xs">
                         {product.locations?.location_id || 'No Location'}
                       </Badge>
                     </div>
