@@ -132,7 +132,7 @@ export const Products: React.FC = () => {
           price: editForm.price,
           stock_quantity: editForm.stock_quantity,
           min_quantity: editForm.min_quantity,
-          location: editForm.location,
+          location_id: editForm.location_id,
         })
         .eq('id', editForm.id);
 
