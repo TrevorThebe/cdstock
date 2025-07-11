@@ -16,13 +16,13 @@ interface Product {
   location_id: string;
   locations?: {
     id: string;
-    location: string;
+    location_id: string;
   };
 }
 
 interface Location {
   id: string;
-  location: string;
+  location_id: string;
 }
 
 export const Products: React.FC = () => {
@@ -39,7 +39,7 @@ export const Products: React.FC = () => {
     price: 0,
     stock_quantity: 0,
     min_quantity: 0,
-    location: ''
+    location_id: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -58,7 +58,7 @@ export const Products: React.FC = () => {
           *,
           locations (
             id,
-            location
+            location_id
           )
         `)
         .order('created_at', { ascending: false });
@@ -104,7 +104,7 @@ export const Products: React.FC = () => {
       price: product.price,
       stock_quantity: product.stock_quantity,
       min_quantity: product.min_quantity,
-      location: product.locations?.id || product.location,
+      location_id: product.locations?.id || product.location_id,
     });
   };
 
