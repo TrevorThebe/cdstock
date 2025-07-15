@@ -16,13 +16,13 @@ interface Product {
   location_id: string;
   locations?: {
     id: string;
-    location_id: string;
+    location: string;
   };
 }
 
 interface Location {
   id: string;
-  location_id: string;
+  location: string;
 }
 
 export const Products: React.FC = () => {
@@ -39,7 +39,7 @@ export const Products: React.FC = () => {
     price: 0,
     stock_quantity: 0,
     min_quantity: 0,
-    location_id: ''
+    location: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -58,7 +58,7 @@ export const Products: React.FC = () => {
           *,
           locations (
             id,
-            location_id
+            location
           )
         `)
         .order('created_at', { ascending: false });
@@ -92,7 +92,7 @@ export const Products: React.FC = () => {
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchTerm.toLowerCase());
     if (activeTab === 'all') return matchesSearch;
-    return matchesSearch && product.locations?.location_id?.toLowerCase() === activeTab;
+    return matchesSearch && product.locations?.location?.toLowerCase() === activeTab;
   });
 
   const handleEditProduct = (product: Product) => {
@@ -104,7 +104,7 @@ export const Products: React.FC = () => {
       price: product.price,
       stock_quantity: product.stock_quantity,
       min_quantity: product.min_quantity,
-      location_id: product.locations?.id || product.location_id,
+      location: product.locations?.id || product.location,
     });
   };
 
@@ -121,7 +121,7 @@ export const Products: React.FC = () => {
   const handleEditFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
-    
+
     setIsSubmitting(true);
     try {
       const { error } = await supabase
@@ -132,7 +132,7 @@ export const Products: React.FC = () => {
           price: editForm.price,
           stock_quantity: editForm.stock_quantity,
           min_quantity: editForm.min_quantity,
-          location_id: editForm.location_id,
+          location: editForm.location,
         })
         .eq('id', editForm.id);
 
@@ -142,7 +142,7 @@ export const Products: React.FC = () => {
         title: 'Success',
         description: 'Product updated successfully',
       });
-      
+
       await loadProducts();
       setEditingProduct(null);
     } catch (error) {
@@ -211,7 +211,7 @@ export const Products: React.FC = () => {
               <div className="mb-2">Quantity: {product.stock_quantity}</div>
               <div className="mb-2">Price: R{product.price.toFixed(2)}</div>
               <Badge className="text-xs mb-2">
-                {product.locations?.location_id || 'Unknown Location'}
+                {product.locations?.location || 'Unknown Location'}
               </Badge>
               <div className="mb-2">Min Quantity: {product.min_quantity}</div>
               <div className="mt-2">
@@ -292,15 +292,15 @@ export const Products: React.FC = () => {
                   <option value="">Select a location</option>
                   {locations.map(loc => (
                     <option key={loc.id} value={loc.id}>
-                      {loc.location_id}
+                      {loc.location}
                     </option>
-                  ))} 
+                  ))}
                 </select>
               </div>
               <div className="flex justify-end gap-2 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setEditingProduct(null)}
                   disabled={isSubmitting}
                 >
