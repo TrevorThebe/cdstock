@@ -173,7 +173,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
                     </div>
                     <div>
                       <Badge variant="outline" className="text-xs">
-                        {product.locations?.location_id || 'No Location'}
+                        {product.locations?.location || 'No Location'}
                       </Badge>
                     </div>
                   </div>
