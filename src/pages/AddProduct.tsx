@@ -15,10 +15,10 @@ interface AddProductProps {
   onCancel: () => void;
 }
 
-export const AddProduct: React.FC<AddProductProps> = ({ 
-  editProduct, 
-  onProductSaved, 
-  onCancel 
+export const AddProduct: React.FC<AddProductProps> = ({
+  editProduct,
+  onProductSaved,
+  onCancel
 }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -26,7 +26,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
     stock_quantity: 0,
     min_quantity: 0,
     price: 0,
-    location_id: ''
+    location: ''
   });
 
   const [locations, setLocations] = useState<any[]>([]);
@@ -69,7 +69,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         stock_quantity: editProduct.stock_quantity || 0,
         min_quantity: editProduct.min_quantity || 0,
         price: editProduct.price || 0,
-        location_id: editProduct.location_id || (editProduct as any).location || ''
+        location_id: editProduct.location || (editProduct as any).location || ''
       });
     } else {
       setFormData({
@@ -78,7 +78,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         stock_quantity: 0,
         min_quantity: 0,
         price: 0,
-        location_id: ''
+        location: ''
       });
     }
   }, [editProduct]);
@@ -94,7 +94,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
   };
 
   const handleLocationChange = (value: string) => {
-    setFormData(prev => ({ ...prev, location_id: value }));
+    setFormData(prev => ({ ...prev, location: value }));
   };
 
   const validateForm = () => {
@@ -116,7 +116,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
       return false;
     }
 
-    if (!formData.location_id) {
+    if (!formData.location) {
       toast({
         title: 'Validation Error',
         description: 'Please select a location',
@@ -130,9 +130,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
 
     try {
@@ -143,7 +143,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         stock_quantity: formData.stock_quantity,
         min_quantity: formData.min_quantity,
         price: formData.price,
-        location_id: formData.location_id,
+        location: formData.location,
         updated_at: new Date().toISOString(),
       };
 
@@ -153,8 +153,8 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
       if (error) throw error;
 
-      toast({ 
-        title: 'Success', 
+      toast({
+        title: 'Success',
         description: `Product ${editProduct ? 'updated' : 'added'} successfully`,
       });
 
@@ -165,17 +165,17 @@ export const AddProduct: React.FC<AddProductProps> = ({
           stock_quantity: 0,
           min_quantity: 0,
           price: 0,
-          location_id: ''
+          location: ''
         });
       }
 
       onProductSaved();
     } catch (error) {
       console.error('Save error:', error);
-      toast({ 
-        title: 'Error', 
+      toast({
+        title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to save product',
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
@@ -194,23 +194,23 @@ export const AddProduct: React.FC<AddProductProps> = ({
               <fieldset disabled={isLoading || isLoadingLocations} className="space-y-4">
                 <div>
                   <Label htmlFor="name">Product Name *</Label>
-                  <Input 
-                    id="name" 
-                    name="name" 
-                    value={formData.name} 
-                    onChange={handleInputChange} 
-                    required 
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
                     minLength={2}
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="description">Description</Label>
-                  <Textarea 
-                    id="description" 
-                    name="description" 
-                    value={formData.description} 
-                    onChange={handleInputChange} 
+                  <Textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
                     rows={3}
                   />
                 </div>
@@ -218,50 +218,50 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="stock_quantity">Current Quantity *</Label>
-                    <Input 
-                      id="stock_quantity" 
-                      name="stock_quantity" 
-                      type="number" 
+                    <Input
+                      id="stock_quantity"
+                      name="stock_quantity"
+                      type="number"
                       min="0"
                       step="1"
-                      value={formData.stock_quantity} 
-                      onChange={handleInputChange} 
-                      required 
+                      value={formData.stock_quantity}
+                      onChange={handleInputChange}
+                      required
                     />
                   </div>
                   <div>
                     <Label htmlFor="min_quantity">Minimum Quantity *</Label>
-                    <Input 
-                      id="min_quantity" 
-                      name="min_quantity" 
-                      type="number" 
+                    <Input
+                      id="min_quantity"
+                      name="min_quantity"
+                      type="number"
                       min="0"
                       step="1"
-                      value={formData.min_quantity} 
-                      onChange={handleInputChange} 
-                      required 
+                      value={formData.min_quantity}
+                      onChange={handleInputChange}
+                      required
                     />
                   </div>
                 </div>
 
                 <div>
                   <Label htmlFor="price">Price (R) *</Label>
-                  <Input 
-                    id="price" 
-                    name="price" 
-                    type="number" 
-                    step="0.01" 
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    step="0.01"
                     min="0.01"
-                    value={formData.price} 
-                    onChange={handleInputChange} 
-                    required 
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    required
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="location">Location *</Label>
-                  <Select 
-                    value={formData.location_id} 
+                  <Select
+                    value={formData.location}
                     onValueChange={handleLocationChange}
                     required
                   >
@@ -271,7 +271,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                     <SelectContent>
                       {locations.map(location => (
                         <SelectItem key={location.id} value={location.id}>
-                          {location.Location}
+                          {location.location}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -279,15 +279,15 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 </div>
 
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={onCancel}
                   >
                     Cancel
                   </Button>
                   <Button type="submit">
-                    {isLoading 
+                    {isLoading
                       ? (editProduct ? 'Updating...' : 'Adding...')
                       : (editProduct ? 'Update Product' : 'Add Products')}
                   </Button>
