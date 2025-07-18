@@ -112,7 +112,7 @@ export const Products: React.FC = () => {
     const { name, value } = e.target;
     setEditForm(prev => ({
       ...prev,
-      [name]: name === 'stock_quantity' || name === 'min_quantity' || name === 'price'
+      [name]: name === 'quantity' || name === 'min_quantity' || name === 'price'
         ? Number(value)
         : value
     }));
