@@ -261,7 +261,7 @@ export const Products: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium mb-1">Stock Quantity</label>
                 <Input
-                  name="stock_quantity"
+                  name="quantity"
                   type="number"
                   min="0"
                   value={editForm.quantity}

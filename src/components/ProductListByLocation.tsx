@@ -10,7 +10,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
-  stock_quantity: number;
+  quantity: number;
   min_quantity: number;
   locations: {
     id: string;
@@ -163,7 +163,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm mb-3">
                     <div>
-                      <span className="font-medium">Quantity:</span> {product.stock_quantity}
+                      <span className="font-medium">Quantity:</span> {product.quantity}
                     </div>
                     <div>
                       <span className="font-medium">Price:</span> R{product.price}

@@ -23,7 +23,7 @@ export const Dashboard: React.FC = () => {
         const profile = await databaseService.getUserProfile(user.id);
         setCurrentUser({ ...user, ...profile });
       }
-      
+
       const allProducts = await databaseService.getProducts();
       setProducts(allProducts);
     } catch (error) {
@@ -33,8 +33,8 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const restaurantProducts = products.filter(p => p.location_id === 'restaurant');
-  const bakeryProducts = products.filter(p => p.location_id === 'bakery');
+  const restaurantProducts = products.filter(p => p.location === 'restaurant');
+  const bakeryProducts = products.filter(p => p.location === 'bakery');
   const lowStockCount = products.filter(p => p.quantity <= p.minQuantity).length;
 
   if (loading) {
@@ -116,7 +116,7 @@ export const Dashboard: React.FC = () => {
 
       {currentUser && (
         <Card>
-          <CardHeader> 
+          <CardHeader>
             <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-3">
               <Avatar className="h-10 w-10 lg:h-12 lg:w-12">
                 <AvatarImage src={currentUser.avatar_url} />

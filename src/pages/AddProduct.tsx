@@ -23,7 +23,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    stock_quantity: 0,
+    quantity: 0,
     min_quantity: 0,
     price: 0,
     location: ''
@@ -42,7 +42,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         const { data, error } = await supabase
           .from('locations')
           .select('*')
-          .order('Location', { ascending: true });
+          .order('location', { ascending: true });
 
         if (error) throw error;
         setLocations(data || []);
@@ -66,7 +66,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
       setFormData({
         name: editProduct.name || '',
         description: editProduct.description || '',
-        stock_quantity: editProduct.stock_quantity || 0,
+        quantity: editProduct.quantity || 0,
         min_quantity: editProduct.min_quantity || 0,
         price: editProduct.price || 0,
         location_id: editProduct.location || (editProduct as any).location || ''
@@ -75,7 +75,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
       setFormData({
         name: '',
         description: '',
-        stock_quantity: 0,
+        quantity: 0,
         min_quantity: 0,
         price: 0,
         location: ''
@@ -87,7 +87,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'stock_quantity' || name === 'min_quantity' || name === 'price'
+      [name]: name === 'quantity' || name === 'min_quantity' || name === 'price'
         ? Math.max(0, Number(value)) // Ensure non-negative numbers
         : value
     }));
@@ -140,7 +140,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         id: editProduct?.id,
         name: formData.name,
         description: formData.description,
-        stock_quantity: formData.stock_quantity,
+        quantity: formData.quantity,
         min_quantity: formData.min_quantity,
         price: formData.price,
         location: formData.location,
@@ -162,7 +162,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         setFormData({
           name: '',
           description: '',
-          stock_quantity: 0,
+          quantity: 0,
           min_quantity: 0,
           price: 0,
           location: ''
@@ -217,14 +217,14 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="stock_quantity">Current Quantity *</Label>
+                    <Label htmlFor="quantity">Current Quantity *</Label>
                     <Input
-                      id="stock_quantity"
-                      name="stock_quantity"
+                      id="quantity"
+                      name="quantity"
                       type="number"
                       min="0"
                       step="1"
-                      value={formData.stock_quantity}
+                      value={formData.quantity}
                       onChange={handleInputChange}
                       required
                     />

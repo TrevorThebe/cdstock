@@ -28,7 +28,7 @@ export const Dashboard: React.FC = () => {
         .select(`
           *,
           locations (
-            Location
+            location
           )
         `);
 
@@ -38,8 +38,8 @@ export const Dashboard: React.FC = () => {
         ...p,
         quantity: p.stock_quantity,
         min_quantity: p.min_quantity,
-        locationName: p.locations?.Location
-          ? p.locations.Location.toLowerCase()
+        locationName: p.locations?.location
+          ? p.locations.location.toLowerCase()
           : '',
       }));
 
