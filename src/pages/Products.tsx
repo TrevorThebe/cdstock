@@ -11,9 +11,9 @@ interface Product {
   name: string;
   description: string;
   price: number;
-  quantity: number;
+  stock_quantity: number;
   min_quantity: number;
-  location_id: string;
+  location: string;
   locations?: {
     id: string;
     location: string;
@@ -32,12 +32,12 @@ export const Products: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'restaurant' | 'bakery'>('all');
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [editForm, setEditForm] = useState<Omit<Product, 'locations'>>({
+  const [editForm, setEditForm] = useState({
     id: '',
     name: '',
     description: '',
     price: 0,
-    quantity: 0,
+    stock_quantity: 0,
     min_quantity: 0,
     location: ''
   });
@@ -102,7 +102,7 @@ export const Products: React.FC = () => {
       name: product.name,
       description: product.description || '',
       price: product.price,
-      quantity: product.quantity,
+      stock_quantity: product.stock_quantity,
       min_quantity: product.min_quantity,
       location: product.locations?.id || product.location,
     });
@@ -112,7 +112,7 @@ export const Products: React.FC = () => {
     const { name, value } = e.target;
     setEditForm(prev => ({
       ...prev,
-      [name]: name === 'quantity' || name === 'min_quantity' || name === 'price'
+      [name]: name === 'stock_quantity' || name === 'min_quantity' || name === 'price'
         ? Number(value)
         : value
     }));
@@ -130,7 +130,7 @@ export const Products: React.FC = () => {
           name: editForm.name,
           description: editForm.description,
           price: editForm.price,
-          quantity: editForm.quantity,
+          stock_quantity: editForm.stock_quantity,
           min_quantity: editForm.min_quantity,
           location: editForm.location,
         })
@@ -208,7 +208,7 @@ export const Products: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="mb-2">{product.description}</div>
-              <div className="mb-2">Quantity: {product.quantity}</div>
+              <div className="mb-2">Quantity: {product.stock_quantity}</div>
               <div className="mb-2">Price: R{product.price.toFixed(2)}</div>
               <Badge className="text-xs mb-2">
                 {product.locations?.location || 'Unknown Location'}
@@ -259,12 +259,12 @@ export const Products: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Quantity</label>
+                <label className="block text-sm font-medium mb-1">Stock Quantity</label>
                 <Input
-                  name="quantity"
+                  name="stock_quantity"
                   type="number"
                   min="0"
-                  value={editForm.quantity}
+                  value={editForm.stock_quantity}
                   onChange={handleEditFormChange}
                   required
                 />
@@ -283,8 +283,8 @@ export const Products: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium mb-1">Location</label>
                 <select
-                  name="location_id"
-                  value={editForm.location_id}
+                  name="location"
+                  value={editForm.location}
                   onChange={handleEditFormChange}
                   required
                   className="w-full border rounded px-3 py-2 text-sm"
