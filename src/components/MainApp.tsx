@@ -6,8 +6,8 @@ import { Profile } from '@/pages/Profile';
 import { Products } from '@/pages/Products';
 import { AddProduct } from '@/pages/AddProduct';
 import { Notifications } from '@/pages/Notifications';
-import { Restaurant } from '@/pages/Restaurant';
-import { Bakery } from '@/pages/Bakery';
+//import { Restaurant } from '@/pages/Restaurant';
+//import { Bakery } from '@/pages/Bakery';
 import { Admin } from '@/pages/Admin';
 import { Chat } from '@/pages/Chat';
 import { UserManagement } from '@/pages/UserManagement';
@@ -32,7 +32,7 @@ export const MainApp: React.FC = () => {
   const initializeApp = () => {
     const users = storage.getUsers();
     const products = storage.getProducts();
-    
+
     if (users.length === 0) {
       const adminUser: User = {
         id: uuidv4(),
@@ -46,7 +46,7 @@ export const MainApp: React.FC = () => {
       };
       storage.saveUsers([adminUser]);
     }
-    
+
     if (products.length === 0) {
       const sampleProducts: Product[] = [
         ...Array.from({ length: 10 }, (_, i) => ({
@@ -74,7 +74,7 @@ export const MainApp: React.FC = () => {
       ];
       storage.saveProducts(sampleProducts);
     }
-    
+
     const user = authService.getCurrentUser();
     setCurrentUser(user);
     setIsLoading(false);
@@ -124,10 +124,10 @@ export const MainApp: React.FC = () => {
       case 'chat':
         return <Chat />;
       case 'user-management':
-        return (currentUser.role === 'admin' || currentUser.role === 'super') ? 
+        return (currentUser.role === 'admin' || currentUser.role === 'super') ?
           <UserManagement /> : <Dashboard />;
       case 'users':
-        return (currentUser.role === 'admin' || currentUser.role === 'super') ? 
+        return (currentUser.role === 'admin' || currentUser.role === 'super') ?
           <Admin currentUser={currentUser} /> : <Dashboard />;
       default:
         return <Dashboard />;
@@ -156,12 +156,12 @@ export const MainApp: React.FC = () => {
       <div className="flex h-screen bg-gray-50">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
-        
+
         {/* Sidebar */}
         <div className={`
           fixed lg:static inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out
@@ -177,7 +177,7 @@ export const MainApp: React.FC = () => {
             onLogout={handleLogout}
           />
         </div>
-        
+
         {/* Main content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Mobile header */}
@@ -191,7 +191,7 @@ export const MainApp: React.FC = () => {
             <h1 className="text-lg font-semibold text-gray-900">CD Stock</h1>
             <div className="w-10" /> {/* Spacer */}
           </div>
-          
+
           {/* Page content */}
           <div className="flex-1 overflow-auto">
             {renderActiveView()}
