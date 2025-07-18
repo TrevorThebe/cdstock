@@ -11,7 +11,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
-  stock_quantity: number;
+  quantity: number;
   min_quantity: number;
   location: string;
   locations?: {
@@ -37,7 +37,7 @@ export const Products: React.FC = () => {
     name: '',
     description: '',
     price: 0,
-    stock_quantity: 0,
+    quantity: 0,
     min_quantity: 0,
     location: ''
   });
@@ -102,7 +102,7 @@ export const Products: React.FC = () => {
       name: product.name,
       description: product.description || '',
       price: product.price,
-      stock_quantity: product.stock_quantity,
+      quantity: product.quantity,
       min_quantity: product.min_quantity,
       location: product.locations?.id || product.location,
     });
@@ -130,7 +130,7 @@ export const Products: React.FC = () => {
           name: editForm.name,
           description: editForm.description,
           price: editForm.price,
-          stock_quantity: editForm.stock_quantity,
+          quantity: editForm.quantity,
           min_quantity: editForm.min_quantity,
           location: editForm.location,
         })
@@ -208,7 +208,7 @@ export const Products: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="mb-2">{product.description}</div>
-              <div className="mb-2">Quantity: {product.stock_quantity}</div>
+              <div className="mb-2">Quantity: {product.quantity}</div>
               <div className="mb-2">Price: R{product.price.toFixed(2)}</div>
               <Badge className="text-xs mb-2">
                 {product.locations?.location || 'Unknown Location'}
@@ -264,7 +264,7 @@ export const Products: React.FC = () => {
                   name="stock_quantity"
                   type="number"
                   min="0"
-                  value={editForm.stock_quantity}
+                  value={editForm.quantity}
                   onChange={handleEditFormChange}
                   required
                 />
