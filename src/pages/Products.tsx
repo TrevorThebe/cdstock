@@ -102,7 +102,7 @@ export const Products: React.FC = () => {
       name: product.name,
       description: product.description || '',
       price: product.price,
-      stock_quantity: product.stock_quantity,
+      stock_quantity: product.quantity,
       min_quantity: product.min_quantity,
       location: product.locations?.id || product.location,
     });
@@ -112,7 +112,7 @@ export const Products: React.FC = () => {
     const { name, value } = e.target;
     setEditForm(prev => ({
       ...prev,
-      [name]: name === 'stock_quantity' || name === 'min_quantity' || name === 'price'
+      [name]: name === 'quantity' || name === 'min_quantity' || name === 'price'
         ? Number(value)
         : value
     }));
@@ -130,7 +130,7 @@ export const Products: React.FC = () => {
           name: editForm.name,
           description: editForm.description,
           price: editForm.price,
-          stock_quantity: editForm.stock_quantity,
+          stock_quantity: editForm.quantity,
           min_quantity: editForm.min_quantity,
           location: editForm.location,
         })
