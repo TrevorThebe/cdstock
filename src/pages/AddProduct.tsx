@@ -69,7 +69,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         quantity: editProduct.quantity || 0,
         min_quantity: editProduct.min_quantity || 0,
         price: editProduct.price || 0,
-        location: editProduct.locations?.id || editProduct.location || ''
+        location: editProduct.location || (editProduct as any).location || ''
       });
     } else {
       setFormData({
@@ -143,7 +143,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         quantity: formData.quantity,
         min_quantity: formData.min_quantity,
         price: formData.price,
-        location: formData.location, // location ID
+        location: formData.location,
         updated_at: new Date().toISOString(),
       };
 

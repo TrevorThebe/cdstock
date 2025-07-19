@@ -92,7 +92,11 @@ export const Products: React.FC = () => {
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchTerm.toLowerCase());
     if (activeTab === 'all') return matchesSearch;
-    return matchesSearch && product.locations?.location?.toLowerCase() === activeTab;
+    // Compare tab with location name (case-insensitive)
+    return (
+      matchesSearch &&
+      product.locations?.location?.toLowerCase() === activeTab
+    );
   });
 
   const handleEditProduct = (product: Product) => {
@@ -209,7 +213,6 @@ export const Products: React.FC = () => {
             <CardContent>
               <div className="mb-2">{product.description}</div>
               <div className="mb-2">Quantity: {product.quantity}</div>
-              <div className="mb-2">Price: R{product.price.toFixed(2)}</div>
               <Badge className="text-xs mb-2">
                 {product.locations?.location || 'Unknown Location'}
               </Badge>
