@@ -43,9 +43,16 @@ export const Dashboard: React.FC = () => {
           : '',
       }));
 
-      const restaurantProducts = mappedProducts.filter(p => p.locationName === 'restaurant');
-      const bakeryProducts = mappedProducts.filter(p => p.locationName === 'bakery');
-      const lowStock = mappedProducts.filter(p => p.quantity <= p.min_quantity);
+      // Use lowercase for comparison, and ensure location names match your tabs
+      const restaurantProducts = mappedProducts.filter(
+        p => p.locationName === 'restaurant'
+      );
+      const bakeryProducts = mappedProducts.filter(
+        p => p.locationName === 'bakery'
+      );
+      const lowStock = mappedProducts.filter(
+        p => Number(p.quantity) <= Number(p.min_quantity)
+      );
 
       const totalValue = mappedProducts.reduce(
         (sum, p) => sum + ((Number(p.price) || 0) * (Number(p.quantity) || 0)), 0

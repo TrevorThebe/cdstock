@@ -92,7 +92,12 @@ export const Products: React.FC = () => {
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchTerm.toLowerCase());
     if (activeTab === 'all') return matchesSearch;
-    return matchesSearch && product.locations?.location?.toLowerCase() === activeTab;
+    // Make location comparison case-insensitive and match actual location names
+    return (
+      matchesSearch &&
+      product.locations?.location &&
+      product.locations.location.toLowerCase() === activeTab
+    );
   });
 
   const handleEditProduct = (product: Product) => {
