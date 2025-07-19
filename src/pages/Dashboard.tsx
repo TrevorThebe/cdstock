@@ -36,7 +36,7 @@ export const Dashboard: React.FC = () => {
 
       const mappedProducts = (data || []).map((p: any) => ({
         ...p,
-        quantity: p.stock_quantity,
+        quantity: p.quantity,
         min_quantity: p.min_quantity,
         locationName: p.locations?.location
           ? p.locations.location.toLowerCase()
