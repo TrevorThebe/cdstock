@@ -17,6 +17,8 @@ import { User, Product } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { Toaster } from '@/components/ui/toaster';
 import { Menu, X } from 'lucide-react';
+import Bakery from '@/pages/Bakery';
+import Restaurant from '@/pages/Restaurant';
 
 export const MainApp: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
