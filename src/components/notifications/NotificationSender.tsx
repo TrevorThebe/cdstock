@@ -76,7 +76,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
         title: 'Success',
         description: `Notification sent to ${notifications.length} users`
       });
-      
+
       setFormData({
         title: '',
         message: '',
@@ -127,7 +127,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
               required
             />
           </div>
-          
+
           <div>
             <Label htmlFor="message">Message</Label>
             <Textarea
@@ -140,7 +140,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
               required
             />
           </div>
-          
+
           <div>
             <Label htmlFor="type">Type</Label>
             <Select value={formData.type} onValueChange={handleTypeChange}>
@@ -155,7 +155,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
               </SelectContent>
             </Select>
           </div>
-          
+
           <Button type="submit" disabled={isLoading} className="w-full">
             {isLoading ? 'Sending...' : 'Send to All Users'}
             <Send className="ml-2 h-4 w-4" />
