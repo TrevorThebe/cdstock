@@ -56,4 +56,19 @@ export const databaseService = {
     const users = storage.getUsers();
     return users.find(u => u.id === userId);
   },
+
+  async getUsers() {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*');
+      if (error) {
+        console.error('Supabase getUsers error:', error);
+      }
+      if (data) return data;
+    } catch (err) {
+      console.error('getUsers exception:', err);
+    }
+    return storage.getUsers ? storage.getUsers() : [];
+  },
 };
