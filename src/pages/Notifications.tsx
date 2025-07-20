@@ -57,6 +57,12 @@ export const Notifications: React.FC = () => {
       console.warn('No currentUser or currentUser.id');
       return;
     }
+    if (typeof databaseService.getNotifications !== 'function') {
+      setNotifications([]);
+      setLoading(false);
+      console.error('databaseService.getNotifications is not a function. Check your databaseService implementation and export.');
+      return;
+    }
     try {
       console.log('Fetching notifications for user:', currentUser.id);
       const notifs = await databaseService.getNotifications(currentUser.id);
