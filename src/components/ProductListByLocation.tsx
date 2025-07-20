@@ -182,7 +182,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
             ))}
           </div>
           {debugInfo && (
-            <div className="mt-6 p-4 bg-gray-100 rounded-md text-sm">
+            <div className="mt-6 p-4 bg-gray-100 rounded-md text-sm" style="display:none;">
               <h3 className="font-medium mb-2">Debug Info:</h3>
               <pre className="text-xs">{JSON.stringify(debugInfo, null, 2)}</pre>
             </div>
