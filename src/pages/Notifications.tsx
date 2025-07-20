@@ -29,24 +29,45 @@ export const Notifications: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && currentUser.id) {
       loadNotifications();
     }
   }, [currentUser]);
 
   const getCurrentUser = async () => {
-    const user = authService.getCurrentUser();
-    if (user) {
-      const profile = await databaseService.getUserProfile(user.id);
-      setCurrentUser({ ...user, profile });
+    try {
+      const user = authService.getCurrentUser();
+      if (user) {
+        const profile = await databaseService.getUserProfile(user.id);
+        setCurrentUser({ ...user, profile });
+      } else {
+        setCurrentUser(null);
+        setLoading(false);
+        console.warn('No current user found');
+      }
+    } catch (err) {
+      setCurrentUser(null);
+      setLoading(false);
+      console.error('Error getting current user:', err);
     }
   };
 
   const loadNotifications = async () => {
+    if (!currentUser || !currentUser.id) {
+      setNotifications([]);
+      setLoading(false);
+      return;
+    }
     try {
       const notifs = await databaseService.getNotifications(currentUser.id);
-      setNotifications(notifs);
+      if (Array.isArray(notifs)) {
+        setNotifications(notifs);
+      } else {
+        setNotifications([]);
+        console.warn('Notifications response is not an array:', notifs);
+      }
     } catch (error) {
+      setNotifications([]);
       console.error('Error loading notifications:', error);
     } finally {
       setLoading(false);
