@@ -27,11 +27,13 @@ export const Chat: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     getCurrentUser();
+    loadUsers();
   }, []);
 
   useEffect(() => {
@@ -52,9 +54,14 @@ export const Chat: React.FC = () => {
     }
   };
 
+  const loadUsers = async () => {
+    const userList = await databaseService.getUsers();
+    setUsers(userList);
+  };
+
   const loadMessages = async () => {
     if (!currentUser || !selectedUserId) return;
-    
+
     try {
       const msgs = await databaseService.getChatMessages(currentUser.id, selectedUserId);
       setMessages(msgs);
@@ -77,7 +84,7 @@ export const Chat: React.FC = () => {
       };
 
       await databaseService.saveChatMessage(messageData);
-      
+
       // Send notification to recipient if current user is admin/super
       if (currentUser.role === 'admin' || currentUser.role === 'super') {
         const notificationData = {
@@ -91,7 +98,7 @@ export const Chat: React.FC = () => {
         };
         await databaseService.saveNotification(notificationData);
       }
-      
+
       setNewMessage('');
       loadMessages();
     } catch (error) {
@@ -122,8 +129,9 @@ export const Chat: React.FC = () => {
           <MessageCircle className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600" />
           <h1 className="text-xl lg:text-3xl font-bold">Chat</h1>
         </div>
-        
-        <UserDropdown 
+
+        <UserDropdown
+          users={users}
           onUserSelect={setSelectedUserId}
           selectedUserId={selectedUserId}
           currentUser={currentUser}
@@ -150,7 +158,7 @@ export const Chat: React.FC = () => {
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
-          
+
           {selectedUserId && (
             <div className="p-3 lg:p-4 border-t bg-gray-50">
               <div className="flex space-x-2">
@@ -162,8 +170,8 @@ export const Chat: React.FC = () => {
                   disabled={loading}
                   className="flex-1"
                 />
-                <Button 
-                  onClick={sendMessage} 
+                <Button
+                  onClick={sendMessage}
                   disabled={loading || !newMessage.trim()}
                   size="sm"
                   className="px-3"
@@ -173,7 +181,7 @@ export const Chat: React.FC = () => {
               </div>
             </div>
           )}
-          
+
           {!selectedUserId && (
             <div className="p-4 text-center text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />

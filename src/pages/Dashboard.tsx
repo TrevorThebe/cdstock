@@ -19,6 +19,7 @@ export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -84,6 +85,8 @@ export const Dashboard: React.FC = () => {
       if (currentUser?.id) {
         const count = await databaseService.getUnreadNotificationCount(currentUser.id);
         setUnreadCount(count);
+        const chatCount = await databaseService.getUnreadChatCount(currentUser.id);
+        setUnreadChatCount(chatCount);
       }
     } catch (error) {
       setProducts([]);
@@ -119,9 +122,9 @@ export const Dashboard: React.FC = () => {
           aria-label="Notifications"
         >
           <Bell className="h-7 w-7 text-blue-600" />
-          {unreadCount > 0 && (
+          {(unreadCount + unreadChatCount) > 0 && (
             <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full px-2 py-0.5 text-xs font-bold">
-              {unreadCount}
+              {unreadCount + unreadChatCount}
             </span>
           )}
         </button>
