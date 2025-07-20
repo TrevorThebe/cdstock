@@ -56,12 +56,18 @@ export const Notifications: React.FC = () => {
     if (!currentUser || !currentUser.id) {
       setNotifications([]);
       setLoading(false);
+      console.warn('No currentUser or currentUser.id');
       return;
     }
     try {
+      console.log('Fetching notifications for user:', currentUser.id);
       const notifs = await databaseService.getNotifications(currentUser.id);
+      console.log('Notifications response:', notifs);
       if (Array.isArray(notifs)) {
         setNotifications(notifs);
+        if (notifs.length === 0) {
+          console.warn('No notifications found for user:', currentUser.id);
+        }
       } else {
         setNotifications([]);
         console.warn('Notifications response is not an array:', notifs);
