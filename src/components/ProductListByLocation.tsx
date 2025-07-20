@@ -32,10 +32,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
       setDebugInfo(null);
 
       try {
-        // Debug: Verify Supabase connection
-        console.log('Fetching products for location:', locationName);
-
-        // Step 1: Get the location ID
+        // Step 1: Get the location ID by name
         const { data: locationData, error: locationError } = await supabase
           .from('locations')
           .select('id')
@@ -46,16 +43,15 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
           throw new Error(`location "${locationName}" not found`);
         }
 
-        // Step 1: Get products for this location
+        // Step 2: Get products for this location id
         const { data: productsData, error: productsError } = await supabase
           .from('products')
-          .select('*') // Remove join if location is not a foreign key
-          .ilike('location', `%${locationName}%`)
+          .select('*')
+          .eq('location', locationData.id) // filter by location id
           .order('created_at', { ascending: false });
 
         if (productsError) throw productsError;
 
-        console.log('Fetched products:', productsData);
         setProducts(productsData || []);
         setDebugInfo({
           locationId: locationData.id,
