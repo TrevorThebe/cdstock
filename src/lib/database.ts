@@ -56,4 +56,11 @@ export const databaseService = {
     const users = storage.getUsers();
     return users.find(u => u.id === userId);
   },
+
+  async getNotifications(userId: string) {
+    // Replace this with your actual database/API call
+    // Example:
+    // return fetch(`/api/notifications?userId=${userId}`).then(res => res.json());
+    return []; // placeholder, replace with real implementation
+  },
 };
