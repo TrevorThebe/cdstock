@@ -10,7 +10,7 @@ export const databaseService = {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*,locations(id,location)')
+        .select('*') // Remove join if location is not a foreign key
         .order('created_at', { ascending: false });
       if (error) {
         console.error('Supabase getProducts error:', error);

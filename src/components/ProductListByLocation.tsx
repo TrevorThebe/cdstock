@@ -46,17 +46,11 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
           throw new Error(`location "${locationName}" not found`);
         }
 
-        // Step 2: Get products for this location
+        // Step 1: Get products for this location
         const { data: productsData, error: productsError } = await supabase
           .from('products')
-          .select(`
-            *,
-            locations (
-              id,
-              location
-            )
-          `)
-          .eq('location', locationData.id)
+          .select('*') // Remove join if location is not a foreign key
+          .ilike('location', `%${locationName}%`)
           .order('created_at', { ascending: false });
 
         if (productsError) throw productsError;
@@ -173,7 +167,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
                     </div>
                     <div>
                       <Badge variant="outline" className="text-xs">
-                        {product.locations?.location || 'No Location'}
+                        {product.location || 'No Location'}
                       </Badge>
                     </div>
                   </div>

@@ -58,13 +58,7 @@ export const Products: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          locations (
-            id,
-            location
-          )
-        `)
+        .select('*') // Remove join if location is not a foreign key
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -96,10 +90,10 @@ export const Products: React.FC = () => {
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchTerm.toLowerCase());
     if (activeTab === 'all') return matchesSearch;
-    // Compare tab with location name (case-insensitive)
+    // Compare tab with location string
     return (
       matchesSearch &&
-      product.locations?.location?.toLowerCase() === activeTab
+      product.location?.toLowerCase() === activeTab
     );
   });
 
@@ -226,7 +220,7 @@ export const Products: React.FC = () => {
                 </div>
               )}
               <Badge className="text-xs mb-2">
-                {product.locations?.location || 'Unknown Location'}
+                {product.location || 'Unknown Location'}
               </Badge>
               <div className="mb-2">Min Quantity: {product.min_quantity}</div>
               <div className="mt-2">
