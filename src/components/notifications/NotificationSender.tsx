@@ -66,11 +66,20 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
         sender_id: currentUser?.id
       })) || [];
 
-      const { error } = await supabase
-        .from('notifications')
-        .insert(notifications);
-
-      if (error) throw error;
+      // Send notification to all users
+      if (Array.isArray(users)) {
+        for (const user of users) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: user.user_id,
+              title: formData.title,
+              message: formData.message,
+              type: formData.type,
+              sender_id: currentUser?.id
+            });
+        }
+      }
 
       toast({
         title: 'Success',
