@@ -11,9 +11,10 @@ import { Send, Bell } from 'lucide-react';
 
 interface NotificationSenderProps {
   currentUser?: any;
+  users?: any[];
 }
 
-export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentUser }) => {
+export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentUser, users = [] }) => {
   const [formData, setFormData] = useState({
     title: '',
     message: '',
@@ -49,41 +50,24 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
 
     setIsLoading(true);
     try {
-      // Get all users except the sender
-      const { data: users, error: usersError } = await supabase
-        .from('user_profiles')
-        .select('user_id')
-        .neq('user_id', currentUser?.id);
-
-      if (usersError) throw usersError;
-
-      // Create notifications for all users
-      const notifications = users?.map(user => ({
-        user_id: user.user_id,
-        title: formData.title,
-        message: formData.message,
-        type: formData.type,
-        sender_id: currentUser?.id
-      })) || [];
-
-      // Send notification to all users
-      if (Array.isArray(users)) {
-        for (const user of users) {
-          await supabase
-            .from('notifications')
-            .insert({
-              user_id: user.user_id,
-              title: formData.title,
-              message: formData.message,
-              type: formData.type,
-              sender_id: currentUser?.id
-            });
-        }
+      // Send notification to all users (including sender if present in users array)
+      let sentCount = 0;
+      for (const user of users) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: user.id || user.user_id, // support both id and user_id
+            title: formData.title,
+            message: formData.message,
+            type: formData.type,
+            sender_id: currentUser?.id
+          });
+        sentCount++;
       }
 
       toast({
         title: 'Success',
-        description: `Notification sent to ${notifications.length} users`
+        description: `Notification sent to ${sentCount} users`
       });
 
       setFormData({
