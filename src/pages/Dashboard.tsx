@@ -24,7 +24,12 @@ export const Dashboard: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*'); // Remove join if location is not a foreign key
+        .select(`
+          *,
+          locations (
+            location
+          )
+        `);
 
       if (error) throw error;
 
@@ -33,7 +38,9 @@ export const Dashboard: React.FC = () => {
         ...p,
         quantity: Number(p.quantity),
         min_quantity: Number(p.min_quantity),
-        locationName: (p.location || '').toLowerCase(),
+        locationName: p.locations?.location
+          ? String(p.locations.location).trim().toLowerCase()
+          : (p.location || '').toLowerCase(),
       }));
 
       const restaurantProducts = mappedProducts.filter(
@@ -156,12 +163,5 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
-            </tbody >
-          </table >
-        </div >
-      </div >
-    </div >
   );
 };

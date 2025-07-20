@@ -32,7 +32,10 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
       setDebugInfo(null);
 
       try {
-        // Step 1: Get the location ID by name
+        // Debug: Verify Supabase connection
+        console.log('Fetching products for location:', locationName);
+
+        // Step 1: Get the location ID
         const { data: locationData, error: locationError } = await supabase
           .from('locations')
           .select('id')
@@ -43,15 +46,22 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
           throw new Error(`location "${locationName}" not found`);
         }
 
-        // Step 2: Get products for this location id
+        // Step 2: Get products for this location
         const { data: productsData, error: productsError } = await supabase
           .from('products')
-          .select('*')
-          .eq('location', locationData.id) // filter by location id
+          .select(`
+            *,
+            locations (
+              id,
+              location
+            )
+          `)
+          .eq('location', locationData.id)
           .order('created_at', { ascending: false });
 
         if (productsError) throw productsError;
 
+        console.log('Fetched products:', productsData);
         setProducts(productsData || []);
         setDebugInfo({
           locationId: locationData.id,
@@ -163,7 +173,7 @@ export const ProductListByLocation: React.FC<{ locationName: string }> = ({ loca
                     </div>
                     <div>
                       <Badge variant="outline" className="text-xs">
-                        {product.location || 'No Location'}
+                        {product.locations?.location || 'No Location'}
                       </Badge>
                     </div>
                   </div>

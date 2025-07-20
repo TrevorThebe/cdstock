@@ -10,7 +10,7 @@ export const databaseService = {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*') // Remove join if location is not a foreign key
+        .select('*,locations(id,location)')
         .order('created_at', { ascending: false });
       if (error) {
         console.error('Supabase getProducts error:', error);
@@ -47,12 +47,11 @@ export const databaseService = {
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .single();
 
-      if (!error && data && data.length > 0) return data[0];
-    } catch (err) {
-      console.error('getUserProfile error:', err);
-    }
+      if (!error && data) return data;
+    } catch { }
 
     const users = storage.getUsers();
     return users.find(u => u.id === userId);
