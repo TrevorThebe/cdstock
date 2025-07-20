@@ -21,11 +21,13 @@ interface Notification {
 export const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     getCurrentUser();
+    fetchAllUsers();
   }, []);
 
   useEffect(() => {
@@ -47,6 +49,21 @@ export const Notifications: React.FC = () => {
       setCurrentUser(null);
       setLoading(false);
       console.warn('No current user found');
+    }
+  };
+
+  const fetchAllUsers = async () => {
+    if (typeof databaseService.getAllUsers === 'function') {
+      try {
+        const allUsers = await databaseService.getAllUsers();
+        setUsers(allUsers);
+      } catch (err) {
+        console.error('Error fetching all users:', err);
+        setUsers([]);
+      }
+    } else {
+      console.warn('databaseService.getAllUsers is not a function');
+      setUsers([]);
     }
   };
 
@@ -127,7 +144,7 @@ export const Notifications: React.FC = () => {
       </div>
 
       {isAdmin && (
-        <NotificationSender currentUser={currentUser} />
+        <NotificationSender currentUser={currentUser} users={users} />
       )}
 
       <Card>
