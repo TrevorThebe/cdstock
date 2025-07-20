@@ -132,14 +132,6 @@ export const Products: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // Record stats before update
-      await databaseService.recordProductChangeStat(
-        currentUser.id,
-        editForm.id,
-        editingProduct.quantity,
-        editForm.quantity
-      );
-
       const { error } = await supabase
         .from('products')
         .update({
@@ -149,7 +141,7 @@ export const Products: React.FC = () => {
           quantity: editForm.quantity,
           min_quantity: editForm.min_quantity,
           location: editForm.location,
-          updated_by: currentUser.id,
+          updated_by: currentUser.id, // record who edited
           updated_at: new Date().toISOString(),
         })
         .eq('id', editForm.id);

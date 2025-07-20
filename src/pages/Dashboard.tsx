@@ -23,20 +23,8 @@ export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    getCurrentUser();
+    loadData();
   }, []);
-
-  useEffect(() => {
-    if (currentUser?.id) {
-      loadData();
-    }
-  }, [currentUser]);
-
-  const getCurrentUser = async () => {
-    // Replace with your auth logic if needed
-    const user = await databaseService.getUserProfile(/* userId from auth */);
-    setCurrentUser(user);
-  };
 
   const loadData = async () => {
     setLoading(true);
@@ -93,11 +81,13 @@ export const Dashboard: React.FC = () => {
         bakeryValue,
       });
 
-      // Fetch unread notification and chat counts
-      const count = await databaseService.getUnreadNotificationCount(currentUser.id);
-      setUnreadCount(count);
-      const chatCount = await databaseService.getUnreadChatCount(currentUser.id);
-      setUnreadChatCount(chatCount);
+      // Fetch unread notification count
+      if (currentUser?.id) {
+        const count = await databaseService.getUnreadNotificationCount(currentUser.id);
+        setUnreadCount(count);
+        const chatCount = await databaseService.getUnreadChatCount(currentUser.id);
+        setUnreadChatCount(chatCount);
+      }
     } catch (error) {
       setProducts([]);
       setStats({

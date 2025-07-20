@@ -67,7 +67,6 @@ export const Notifications: React.FC = () => {
     try {
       await databaseService.markNotificationRead(currentUser.id, notificationId);
       loadNotifications();
-      loadUnreadCount();
     } catch (error) {
       toast({
         title: 'Error',
