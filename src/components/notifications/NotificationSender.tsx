@@ -53,10 +53,13 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
     try {
       let targets: any[] = [];
       if (recipient === 'all') {
+        // Send to all users in users table
         targets = users;
       } else if (recipient === 'admins') {
+        // Send only to admin/super users
         targets = users.filter(u => u.role === 'admin' || u.role === 'super');
       } else {
+        // Send only to selected individual user
         targets = users.filter(u => (u.id || u.user_id) === recipient);
       }
 
