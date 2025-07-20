@@ -63,4 +63,27 @@ export const databaseService = {
     // return fetch(`/api/notifications?userId=${userId}`).then(res => res.json());
     return []; // placeholder, replace with real implementation
   },
+
+  moveToReadNotifications: async (userId, notification) => {
+    // Insert into read_notifications table
+    return supabase
+      .from('read_notifications')
+      .insert({
+        user_id: userId,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        created_at: notification.created_at,
+        read_at: new Date().toISOString(),
+        sender_id: notification.sender_id
+      });
+  },
+  deleteNotification: async (userId, notificationId) => {
+    // Remove from notifications table
+    return supabase
+      .from('notifications')
+      .delete()
+      .eq('id', notificationId)
+      .eq('user_id', userId);
+  },
 };

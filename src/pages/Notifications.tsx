@@ -23,6 +23,7 @@ export const Notifications: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -86,11 +87,13 @@ export const Notifications: React.FC = () => {
       console.log('Notifications response:', notifs);
       if (Array.isArray(notifs)) {
         setNotifications(notifs);
+        setUnreadCount(notifs.filter(n => !n.is_read).length);
         if (notifs.length === 0) {
           console.warn('No notifications found for user:', currentUser.id);
         }
       } else {
         setNotifications([]);
+        setUnreadCount(0);
         console.warn('Notifications response is not an array:', notifs);
       }
     } catch (error) {
@@ -103,7 +106,16 @@ export const Notifications: React.FC = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      await databaseService.markNotificationRead(currentUser.id, notificationId);
+      // Find notification
+      const notification = notifications.find(n => n.id === notificationId);
+      if (!notification) return;
+
+      // Move to read_notifications table
+      await databaseService.moveToReadNotifications(currentUser.id, notification);
+
+      // Remove from notifications table
+      await databaseService.deleteNotification(currentUser.id, notificationId);
+
       loadNotifications();
     } catch (error) {
       toast({
