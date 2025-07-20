@@ -29,7 +29,8 @@ export const Notifications: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (currentUser && currentUser.id) {
+    // Only load notifications if user exists in users table
+    if (currentUser && currentUser.id && currentUser.profile && currentUser.profile.id) {
       loadNotifications();
     }
   }, [currentUser]);
@@ -39,7 +40,13 @@ export const Notifications: React.FC = () => {
       const user = authService.getCurrentUser();
       if (user) {
         const profile = await databaseService.getUserProfile(user.id);
-        setCurrentUser({ ...user, profile });
+        if (profile && profile.id) {
+          setCurrentUser({ ...user, profile });
+        } else {
+          setCurrentUser(null);
+          setLoading(false);
+          console.warn('User not found in users table');
+        }
       } else {
         setCurrentUser(null);
         setLoading(false);
@@ -53,10 +60,10 @@ export const Notifications: React.FC = () => {
   };
 
   const loadNotifications = async () => {
-    if (!currentUser || !currentUser.id) {
+    if (!currentUser || !currentUser.id || !currentUser.profile || !currentUser.profile.id) {
       setNotifications([]);
       setLoading(false);
-      console.warn('No currentUser or currentUser.id');
+      console.warn('No valid user in users table');
       return;
     }
     try {
@@ -115,6 +122,18 @@ export const Notifications: React.FC = () => {
     );
   }
 
+  // Show warning if user not found in users table
+  if (!currentUser || !currentUser.profile || !currentUser.profile.id) {
+    return (
+      <div className="p-4 lg:p-6 flex items-center justify-center">
+        <div className="text-center">
+          <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p>User not found in users table. Notifications are unavailable.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       <div className="flex items-center space-x-3 mb-6">
@@ -123,6 +142,7 @@ export const Notifications: React.FC = () => {
       </div>
 
       {isAdmin && (
+        // Only allow sending notifications if user exists in users table
         <NotificationSender currentUser={currentUser} />
       )}
 
