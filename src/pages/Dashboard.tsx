@@ -158,10 +158,10 @@ export const Dashboard: React.FC = () => {
     </div>
   );
 };
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+            </tbody >
+          </table >
+        </div >
+      </div >
+    </div >
   );
 };
