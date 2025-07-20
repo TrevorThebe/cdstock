@@ -22,6 +22,7 @@ export const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -31,6 +32,7 @@ export const Notifications: React.FC = () => {
   useEffect(() => {
     if (currentUser) {
       loadNotifications();
+      loadUnreadCount();
     }
   }, [currentUser]);
 
@@ -42,10 +44,18 @@ export const Notifications: React.FC = () => {
     }
   };
 
+  const loadUnreadCount = async () => {
+    if (currentUser?.id) {
+      const count = await databaseService.getUnreadNotificationCount(currentUser.id);
+      setUnreadCount(count);
+    }
+  };
+
   const loadNotifications = async () => {
     try {
       const notifs = await databaseService.getNotifications(currentUser.id);
       setNotifications(notifs);
+      loadUnreadCount();
     } catch (error) {
       console.error('Error loading notifications:', error);
     } finally {
@@ -93,6 +103,11 @@ export const Notifications: React.FC = () => {
       <div className="flex items-center space-x-3 mb-6">
         <Bell className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600" />
         <h1 className="text-xl lg:text-3xl font-bold">Notifications</h1>
+        {unreadCount > 0 && (
+          <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-0.5 text-xs font-bold">
+            {unreadCount} unread
+          </span>
+        )}
       </div>
 
       {isAdmin && (
@@ -109,9 +124,8 @@ export const Notifications: React.FC = () => {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 rounded-lg border ${
-                    notification.is_read ? 'bg-gray-50' : 'bg-white border-blue-200'
-                  }`}
+                  className={`p-4 rounded-lg border ${notification.is_read ? 'bg-gray-50' : 'bg-white border-blue-200'
+                    }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
