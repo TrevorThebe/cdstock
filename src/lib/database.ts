@@ -71,4 +71,21 @@ export const databaseService = {
     }
     return storage.getUsers ? storage.getUsers() : [];
   },
+
+  async getNotifications(userId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error('Supabase getNotifications error:', error);
+      }
+      if (data) return data;
+    } catch (err) {
+      console.error('getNotifications exception:', err);
+    }
+    return [];
+  },
 };
