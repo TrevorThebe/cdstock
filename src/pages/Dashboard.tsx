@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
-import { Bell } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { databaseService } from '@/lib/database';
 
 export const Dashboard: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -17,9 +14,6 @@ export const Dashboard: React.FC = () => {
     bakeryValue: 0
   });
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const navigate = useNavigate();
 
   useEffect(() => {
     loadData();
@@ -79,12 +73,6 @@ export const Dashboard: React.FC = () => {
         restaurantValue,
         bakeryValue,
       });
-
-      // Fetch unread notification count
-      if (currentUser?.id) {
-        const count = await databaseService.getUnreadNotificationCount(currentUser.id);
-        setUnreadCount(count);
-      }
     } catch (error) {
       setProducts([]);
       setStats({
@@ -113,18 +101,6 @@ export const Dashboard: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <button
-          className="relative ml-4"
-          onClick={() => navigate('/notifications')}
-          aria-label="Notifications"
-        >
-          <Bell className="h-7 w-7 text-blue-600" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full px-2 py-0.5 text-xs font-bold">
-              {unreadCount}
-            </span>
-          )}
-        </button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
