@@ -65,6 +65,14 @@ export const Chat: React.FC = () => {
     try {
       const msgs = await databaseService.getChatMessages(currentUser.id, selectedUserId);
       setMessages(msgs);
+
+      // Mark unread messages as read for current user
+      const unread = msgs.filter(
+        m => m.recipient_id === currentUser.id && !m.is_read
+      );
+      for (const msg of unread) {
+        await databaseService.markChatMessageRead(currentUser.id, msg.id);
+      }
     } catch (error) {
       console.error('Error loading messages:', error);
     }
@@ -80,7 +88,8 @@ export const Chat: React.FC = () => {
         user_id: currentUser.id,
         recipient_id: selectedUserId,
         message: newMessage.trim(),
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        is_read: false
       };
 
       await databaseService.saveChatMessage(messageData);
@@ -94,7 +103,8 @@ export const Chat: React.FC = () => {
           message: newMessage.trim(),
           type: 'message',
           priority: 'medium',
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          is_read: false
         };
         await databaseService.saveNotification(notificationData);
       }
