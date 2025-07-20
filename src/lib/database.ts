@@ -10,10 +10,15 @@ export const databaseService = {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*,locations(id,location)')
         .order('created_at', { ascending: false });
-      if (!error && data) return data;
-    } catch { }
+      if (error) {
+        console.error('Supabase getProducts error:', error);
+      }
+      if (data) return data;
+    } catch (err) {
+      console.error('getProducts exception:', err);
+    }
     return storage.getProducts();
   },
 
