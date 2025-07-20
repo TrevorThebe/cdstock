@@ -13,7 +13,6 @@ export const Dashboard: React.FC = () => {
     restaurantValue: 0,
     bakeryValue: 0
   });
-  /*Trevor Update*/
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,13 +33,14 @@ export const Dashboard: React.FC = () => {
 
       if (error) throw error;
 
+      // Defensive mapping for locationName
       const mappedProducts = (data || []).map((p: any) => ({
         ...p,
         quantity: Number(p.quantity),
         min_quantity: Number(p.min_quantity),
         locationName: p.locations?.location
-          ? p.locations.location.trim().toLowerCase()
-          : '',
+          ? String(p.locations.location).trim().toLowerCase()
+          : (p.location || '').toLowerCase(),
       }));
 
       const restaurantProducts = mappedProducts.filter(
@@ -136,7 +136,7 @@ export const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-      {/* Optionally, show a table/list of all products with quantity and last editor */}
+      {/* Show all products with quantity and last editor */}
       <div className="mt-8">
         <h2 className="text-lg font-bold mb-4">All Products</h2>
         <div className="overflow-x-auto">
@@ -146,6 +146,7 @@ export const Dashboard: React.FC = () => {
                 <th className="text-left py-2 px-3">Name</th>
                 <th className="text-left py-2 px-3">Quantity</th>
                 <th className="text-left py-2 px-3">Last Edited By</th>
+                <th className="text-left py-2 px-3">Location</th>
               </tr>
             </thead>
             <tbody>
@@ -154,6 +155,7 @@ export const Dashboard: React.FC = () => {
                   <td className="py-2 px-3">{p.name}</td>
                   <td className="py-2 px-3">{p.quantity}</td>
                   <td className="py-2 px-3">{p.updated_by || '-'}</td>
+                  <td className="py-2 px-3">{p.locations?.location || p.location || '-'}</td>
                 </tr>
               ))}
             </tbody>
