@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
+import { authService } from '@/lib/auth';
 
 interface Product {
   id: string;
@@ -42,11 +43,14 @@ export const Products: React.FC = () => {
     location: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     loadProducts();
     loadLocations();
+    const user = authService.getCurrentUser();
+    setCurrentUser(user);
   }, []);
 
   const loadProducts = async () => {
@@ -124,7 +128,7 @@ export const Products: React.FC = () => {
 
   const handleEditFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingProduct) return;
+    if (!editingProduct || !currentUser) return;
 
     setIsSubmitting(true);
     try {
@@ -137,6 +141,8 @@ export const Products: React.FC = () => {
           quantity: editForm.quantity,
           min_quantity: editForm.min_quantity,
           location: editForm.location,
+          updated_by: currentUser.id, // record who edited
+          updated_at: new Date().toISOString(),
         })
         .eq('id', editForm.id);
 
@@ -213,6 +219,12 @@ export const Products: React.FC = () => {
             <CardContent>
               <div className="mb-2">{product.description}</div>
               <div className="mb-2">Quantity: {product.quantity}</div>
+              {/* Show who last edited if available */}
+              {product.updated_by && (
+                <div className="mb-2 text-xs text-muted-foreground">
+                  Last edited by: {product.updated_by}
+                </div>
+              )}
               <Badge className="text-xs mb-2">
                 {product.locations?.location || 'Unknown Location'}
               </Badge>

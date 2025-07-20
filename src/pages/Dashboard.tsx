@@ -136,6 +136,30 @@ export const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+      {/* Optionally, show a table/list of all products with quantity and last editor */}
+      <div className="mt-8">
+        <h2 className="text-lg font-bold mb-4">All Products</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr>
+                <th className="text-left py-2 px-3">Name</th>
+                <th className="text-left py-2 px-3">Quantity</th>
+                <th className="text-left py-2 px-3">Last Edited By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map(p => (
+                <tr key={p.id}>
+                  <td className="py-2 px-3">{p.name}</td>
+                  <td className="py-2 px-3">{p.quantity}</td>
+                  <td className="py-2 px-3">{p.updated_by || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
