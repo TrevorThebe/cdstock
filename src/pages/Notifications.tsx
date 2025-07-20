@@ -130,9 +130,8 @@ export const Notifications: React.FC = () => {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 rounded-lg border ${
-                    notification.is_read ? 'bg-gray-50' : 'bg-white border-blue-200'
-                  }`}
+                  className={`p-4 rounded-lg border ${notification.is_read ? 'bg-gray-50' : 'bg-white border-blue-200'
+                    }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
