@@ -47,11 +47,12 @@ export const databaseService = {
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('user_id', userId)
-        .single();
+        .eq('user_id', userId);
 
-      if (!error && data) return data;
-    } catch { }
+      if (!error && data && data.length > 0) return data[0];
+    } catch (err) {
+      console.error('getUserProfile error:', err);
+    }
 
     const users = storage.getUsers();
     return users.find(u => u.id === userId);
