@@ -86,4 +86,13 @@ export const databaseService = {
       .eq('id', notificationId)
       .eq('user_id', userId);
   },
+
+  getAllUsers: async () => {
+    // Fetch all users from user_profiles table
+    const { data, error } = await supabase
+      .from('users')
+      .select('*');
+    if (error) throw error;
+    return data || [];
+  },
 };
