@@ -86,4 +86,10 @@ export const databaseService = {
       .eq('id', notificationId)
       .eq('user_id', userId);
   },
+  addToAdminUsers: async (userId: string) => {
+    // Insert user into admin_users table
+    return supabase
+      .from('admin_users')
+      .insert({ user_id: userId });
+  },
 };
