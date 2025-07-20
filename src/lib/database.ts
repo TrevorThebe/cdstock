@@ -90,9 +90,34 @@ export const databaseService = {
   getAllUsers: async () => {
     // Fetch all users from user_profiles table
     const { data, error } = await supabase
-      .from('users')
+      .from('user_profiles')
       .select('*');
     if (error) throw error;
     return data || [];
+  },
+
+  createUser: async (user: any) => {
+    // Insert into users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .insert(user)
+      .select()
+      .single();
+    if (userError) throw userError;
+
+    // Insert into user_profiles table
+    const profile = {
+      user_id: userData.id || user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role || 'user',
+      // add other profile fields as needed
+    };
+    const { error: profileError } = await supabase
+      .from('user_profiles')
+      .insert(profile);
+    if (profileError) throw profileError;
+
+    return userData;
   },
 };
