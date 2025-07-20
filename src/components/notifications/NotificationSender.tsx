@@ -53,19 +53,18 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
     try {
       let targets: any[] = [];
       if (recipient === 'all') {
-        // Send to all users in users table
         targets = users;
       } else if (recipient === 'admins') {
-        // Send only to admin/super users
         targets = users.filter(u => u.role === 'admin' || u.role === 'super');
       } else {
-        // Send only to selected individual user
         targets = users.filter(u => (u.id || u.user_id) === recipient);
       }
 
+      console.log('Sending notifications to:', targets); // Debug log
+
       let sentCount = 0;
       for (const user of targets) {
-        await supabase
+        const result = await supabase
           .from('notifications')
           .insert({
             user_id: user.id || user.user_id,
@@ -74,6 +73,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
             type: formData.type,
             sender_id: currentUser?.id
           });
+        console.log('Insert result for user:', user.id || user.user_id, result); // Debug log
         sentCount++;
       }
 

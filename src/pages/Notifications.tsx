@@ -57,6 +57,7 @@ export const Notifications: React.FC = () => {
     if (typeof databaseService.getAllUsers === 'function') {
       try {
         const allUsers = await databaseService.getAllUsers();
+        console.log('Fetched users:', allUsers); // Debug log
         setUsers(allUsers);
       } catch (err) {
         console.error('Error fetching all users:', err);
