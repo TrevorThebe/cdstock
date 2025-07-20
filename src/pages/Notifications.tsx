@@ -29,58 +29,24 @@ export const Notifications: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Only load notifications if user exists in users table
-    if (currentUser && currentUser.id && currentUser.profile && currentUser.profile.id) {
+    if (currentUser) {
       loadNotifications();
     }
   }, [currentUser]);
 
   const getCurrentUser = async () => {
-    try {
-      const user = authService.getCurrentUser();
-      if (user) {
-        const profile = await databaseService.getUserProfile(user.id);
-        if (profile && profile.id) {
-          setCurrentUser({ ...user, profile });
-        } else {
-          setCurrentUser(null);
-          setLoading(false);
-          console.warn('User not found in users table');
-        }
-      } else {
-        setCurrentUser(null);
-        setLoading(false);
-        console.warn('No current user found');
-      }
-    } catch (err) {
-      setCurrentUser(null);
-      setLoading(false);
-      console.error('Error getting current user:', err);
+    const user = authService.getCurrentUser();
+    if (user) {
+      const profile = await databaseService.getUserProfile(user.id);
+      setCurrentUser({ ...user, profile });
     }
   };
 
   const loadNotifications = async () => {
-    if (!currentUser || !currentUser.id || !currentUser.profile || !currentUser.profile.id) {
-      setNotifications([]);
-      setLoading(false);
-      console.warn('No valid user in users table');
-      return;
-    }
     try {
-      console.log('Fetching notifications for user:', currentUser.id);
       const notifs = await databaseService.getNotifications(currentUser.id);
-      console.log('Notifications response:', notifs);
-      if (Array.isArray(notifs)) {
-        setNotifications(notifs);
-        if (notifs.length === 0) {
-          console.warn('No notifications found for user:', currentUser.id);
-        }
-      } else {
-        setNotifications([]);
-        console.warn('Notifications response is not an array:', notifs);
-      }
+      setNotifications(notifs);
     } catch (error) {
-      setNotifications([]);
       console.error('Error loading notifications:', error);
     } finally {
       setLoading(false);
@@ -122,18 +88,6 @@ export const Notifications: React.FC = () => {
     );
   }
 
-  // Show warning if user not found in users table
-  if (!currentUser || !currentUser.profile || !currentUser.profile.id) {
-    return (
-      <div className="p-4 lg:p-6 flex items-center justify-center">
-        <div className="text-center">
-          <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>User not found in users table. Notifications are unavailable.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 lg:p-6 space-y-6">
       <div className="flex items-center space-x-3 mb-6">
@@ -142,7 +96,6 @@ export const Notifications: React.FC = () => {
       </div>
 
       {isAdmin && (
-        // Only allow sending notifications if user exists in users table
         <NotificationSender currentUser={currentUser} />
       )}
 
@@ -156,8 +109,9 @@ export const Notifications: React.FC = () => {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 rounded-lg border ${notification.is_read ? 'bg-gray-50' : 'bg-white border-blue-200'
-                    }`}
+                  className={`p-4 rounded-lg border ${
+                    notification.is_read ? 'bg-gray-50' : 'bg-white border-blue-200'
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
