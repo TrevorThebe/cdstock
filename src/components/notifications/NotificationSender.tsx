@@ -11,16 +11,14 @@ import { Send, Bell } from 'lucide-react';
 
 interface NotificationSenderProps {
   currentUser?: any;
-  users?: any[];
 }
 
-export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentUser, users = [] }) => {
+export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentUser }) => {
   const [formData, setFormData] = useState({
     title: '',
     message: '',
     type: 'info' as 'info' | 'warning' | 'success' | 'error'
   });
-  const [recipient, setRecipient] = useState('all'); // 'all', 'admins', or user id
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -51,35 +49,32 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
 
     setIsLoading(true);
     try {
-      let targets: any[] = [];
-      if (recipient === 'all') {
-        targets = users;
-      } else if (recipient === 'admins') {
-        targets = users.filter(u => u.role === 'admin' || u.role === 'super');
-      } else {
-        targets = users.filter(u => (u.id || u.user_id) === recipient);
-      }
+      // Get all users except the sender
+      const { data: users, error: usersError } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .neq('user_id', currentUser?.id);
 
-      console.log('Sending notifications to:', targets); // Debug log
+      if (usersError) throw usersError;
 
-      let sentCount = 0;
-      for (const user of targets) {
-        const result = await supabase
-          .from('notifications')
-          .insert({
-            user_id: user.id || user.user_id,
-            title: formData.title,
-            message: formData.message,
-            type: formData.type,
-            sender_id: currentUser?.id
-          });
-        console.log('Insert result for user:', user.id || user.user_id, result); // Debug log
-        sentCount++;
-      }
+      // Create notifications for all users
+      const notifications = users?.map(user => ({
+        user_id: user.user_id,
+        title: formData.title,
+        message: formData.message,
+        type: formData.type,
+        sender_id: currentUser?.id
+      })) || [];
+
+      const { error } = await supabase
+        .from('notifications')
+        .insert(notifications);
+
+      if (error) throw error;
 
       toast({
         title: 'Success',
-        description: `Notification sent to ${sentCount} user${sentCount !== 1 ? 's' : ''}`
+        description: `Notification sent to ${notifications.length} users`
       });
 
       setFormData({
@@ -87,7 +82,6 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
         message: '',
         type: 'info'
       });
-      setRecipient('all');
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -117,7 +111,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Send className="h-5 w-5" />
-          Send Notification
+          Send Notification to All Users
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -162,26 +156,8 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
             </Select>
           </div>
 
-          <div>
-            <Label htmlFor="recipient">Recipient</Label>
-            <Select value={recipient} onValueChange={setRecipient}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                <SelectItem value="admins">Admins Only</SelectItem>
-                {users.map(user => (
-                  <SelectItem key={user.id || user.user_id} value={user.id || user.user_id}>
-                    {user.name || user.email || user.username || user.id || user.user_id}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? 'Sending...' : 'Send'}
+            {isLoading ? 'Sending...' : 'Send to All Users'}
             <Send className="ml-2 h-4 w-4" />
           </Button>
         </form>

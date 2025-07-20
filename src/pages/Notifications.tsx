@@ -21,84 +21,32 @@ interface Notification {
 export const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
     getCurrentUser();
-    fetchAllUsers();
   }, []);
 
   useEffect(() => {
-    if (currentUser && currentUser.id) {
+    if (currentUser) {
       loadNotifications();
-    } else {
-      console.warn('currentUser or currentUser.id not set:', currentUser);
     }
   }, [currentUser]);
 
   const getCurrentUser = async () => {
     const user = authService.getCurrentUser();
-    console.log('authService.getCurrentUser:', user);
     if (user) {
       const profile = await databaseService.getUserProfile(user.id);
-      console.log('databaseService.getUserProfile:', profile);
       setCurrentUser({ ...user, profile });
-    } else {
-      setCurrentUser(null);
-      setLoading(false);
-      console.warn('No current user found');
-    }
-  };
-
-  const fetchAllUsers = async () => {
-    if (typeof databaseService.getAllUsers === 'function') {
-      try {
-        const allUsers = await databaseService.getAllUsers();
-        console.log('Fetched users:', allUsers); // Debug log
-        setUsers(allUsers);
-      } catch (err) {
-        console.error('Error fetching all users:', err);
-        setUsers([]);
-      }
-    } else {
-      console.warn('databaseService.getAllUsers is not a function');
-      setUsers([]);
     }
   };
 
   const loadNotifications = async () => {
-    if (!currentUser || !currentUser.id) {
-      setNotifications([]);
-      setLoading(false);
-      console.warn('No currentUser or currentUser.id');
-      return;
-    }
-    if (typeof databaseService.getNotifications !== 'function') {
-      setNotifications([]);
-      setLoading(false);
-      console.error('databaseService.getNotifications is not a function. Check your databaseService implementation and export.');
-      return;
-    }
     try {
-      console.log('Fetching notifications for user:', currentUser.id);
       const notifs = await databaseService.getNotifications(currentUser.id);
-      console.log('Notifications response:', notifs);
-      if (Array.isArray(notifs)) {
-        setNotifications(notifs);
-        setUnreadCount(notifs.filter(n => !n.is_read).length);
-        if (notifs.length === 0) {
-          console.warn('No notifications found for user:', currentUser.id);
-        }
-      } else {
-        setNotifications([]);
-        setUnreadCount(0);
-        console.warn('Notifications response is not an array:', notifs);
-      }
+      setNotifications(notifs);
     } catch (error) {
-      setNotifications([]);
       console.error('Error loading notifications:', error);
     } finally {
       setLoading(false);
@@ -107,16 +55,7 @@ export const Notifications: React.FC = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      // Find notification
-      const notification = notifications.find(n => n.id === notificationId);
-      if (!notification) return;
-
-      // Move to read_notifications table
-      await databaseService.moveToReadNotifications(currentUser.id, notification);
-
-      // Remove from notifications table
-      await databaseService.deleteNotification(currentUser.id, notificationId);
-
+      await databaseService.markNotificationRead(currentUser.id, notificationId);
       loadNotifications();
     } catch (error) {
       toast({
@@ -157,7 +96,7 @@ export const Notifications: React.FC = () => {
       </div>
 
       {isAdmin && (
-        <NotificationSender currentUser={currentUser} users={users} />
+        <NotificationSender currentUser={currentUser} />
       )}
 
       <Card>
@@ -170,8 +109,9 @@ export const Notifications: React.FC = () => {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 rounded-lg border ${notification.is_read ? 'bg-gray-50' : 'bg-white border-blue-200'
-                    }`}
+                  className={`p-4 rounded-lg border ${
+                    notification.is_read ? 'bg-gray-50' : 'bg-white border-blue-200'
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

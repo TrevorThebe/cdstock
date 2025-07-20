@@ -10,7 +10,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { UserPlus, Mail, Shield, Ban, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { databaseService } from '@/lib/databaseService';
 
 interface User {
   id: string;
@@ -82,7 +81,7 @@ export const UserManagement: React.FC = () => {
         title: 'Success',
         description: 'User added successfully'
       });
-
+      
       setNewUser({ name: '', email: '', role: 'normal' });
       setIsAddUserOpen(false);
       loadUsers();
@@ -105,33 +104,6 @@ export const UserManagement: React.FC = () => {
         .eq('id', userId);
 
       if (error) throw error;
-
-      toast({
-        title: 'Success',
-        description: 'User role updated successfully'
-      });
-      loadUsers();
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update user role',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update({ role: newRole })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      if (newRole === 'admin' || newRole === 'super') {
-        await databaseService.addToAdminUsers(userId);
-      }
 
       toast({
         title: 'Success',
@@ -325,7 +297,7 @@ export const UserManagement: React.FC = () => {
                           )}
                           <Select
                             value={user.role}
-                            onValueChange={(value) => handleRoleChange(user.id, value)}
+                            onValueChange={(value) => updateUserRole(user.id, value)}
                           >
                             <SelectTrigger className="w-20 h-8">
                               <Shield className="h-3 w-3" />
