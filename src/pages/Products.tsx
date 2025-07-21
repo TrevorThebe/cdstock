@@ -142,7 +142,7 @@ export const Products: React.FC = () => {
           min_quantity: editForm.min_quantity,
           location: editForm.location,
           //if it breaks revert back to original code below
-          updated_by: currentUser.name, // record who edited - original updated_by: currentUser.id,
+          updated_by: currentUser.name, // record who edited - original updated_by: currentUser.id
           updated_at: new Date().toISOString(),
         })
         .eq('id', editForm.id);
