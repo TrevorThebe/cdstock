@@ -37,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'restaurant', label: 'Restaurant', icon: ChefHat },
     { id: 'bakery', label: 'Bakery', icon: Coffee },
     { id: 'add-product', label: 'Add Product', icon: Plus },
-    { id: 'chat', label: 'Chat', icon: MessageCircle },
+    //{ id: 'chat', label: 'Chat', icon: MessageCircle },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'profile', label: 'Profile', icon: Settings },
   ];
@@ -56,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           CD Stock
         </h2>
       </div>
-      
+
       <nav className="flex-1 px-2 lg:px-4 py-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
@@ -72,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </Button>
           );
         })}
-        
+
         {isAdmin && (
           <>
             <div className="pt-4 pb-2">
@@ -97,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </>
         )}
       </nav>
-      
+
       <div className="p-2 lg:p-4 border-t bg-gray-50/50">
         {currentUser && (
           <div className="mb-3 p-2 lg:p-3 bg-white rounded-lg border">
