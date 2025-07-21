@@ -141,7 +141,7 @@ export const Products: React.FC = () => {
           quantity: editForm.quantity,
           min_quantity: editForm.min_quantity,
           location: editForm.location,
-          updated_by: currentUser.id, // record who edited
+          updated_by: currentUser.name, // record who edited
           updated_at: new Date().toISOString(),
         })
         .eq('id', editForm.id);
