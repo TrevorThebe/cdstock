@@ -66,7 +66,12 @@ export const Products: React.FC = () => {
           locations (
             id,
             location
-          )
+          ),
+        updated_by_user:users (
+          id,
+          name,
+          email
+        )
         `)
         .order('created_at', { ascending: false });
 
