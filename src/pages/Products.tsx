@@ -15,9 +15,6 @@ interface Product {
   quantity: number;
   min_quantity: number;
   location: string;
-  updated_by?: string; // user ID
-  updated_by_name?: string; // user name
-  updated_at?: string;
   locations?: {
     id: string;
     location: string;
@@ -66,12 +63,7 @@ export const Products: React.FC = () => {
           locations (
             id,
             location
-          ),
-        updated_by_user:users (
-          id,
-          name,
-          email
-        )
+          )
         `)
         .order('created_at', { ascending: false });
 
@@ -150,7 +142,6 @@ export const Products: React.FC = () => {
           min_quantity: editForm.min_quantity,
           location: editForm.location,
           updated_by: currentUser.id, // record who edited
-          updated_by_name: currentUser.name || currentUser.email, // Store name or email
           updated_at: new Date().toISOString(),
         })
         .eq('id', editForm.id);
@@ -229,9 +220,9 @@ export const Products: React.FC = () => {
               <div className="mb-2">{product.description}</div>
               <div className="mb-2">Quantity: {product.quantity}</div>
               {/* Show who last edited if available */}
-              {product.updated_by_name && (
+              {product.updated_by && (
                 <div className="mb-2 text-xs text-muted-foreground">
-                  Last edited by: {product.updated_by_name}
+                  Last edited by: {product.updated_by}
                 </div>
               )}
               <Badge className="text-xs mb-2">
