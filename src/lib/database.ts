@@ -57,6 +57,20 @@ export const databaseService = {
     return users.find(u => u.id === userId);
   },
 
+  export const getChatMessagesWithProfiles = async (userId: string, recipientId: string) => {
+    const { supabase } = require('@/lib/supabase');
+
+    const { data, error } = await supabase
+      .from('chat_messages_with_profiles')
+      .select('*')
+      .or(`and(user_id.eq.${userId},recipient_id.eq.${recipientId}),and(user_id.eq.${recipientId},recipient_id.eq.${userId})`)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data;
+  };
+
+
   async getChatMessages(userId: string, recipientId: string) {
     const { data, error } = await supabase
       .from('chat_messages')
