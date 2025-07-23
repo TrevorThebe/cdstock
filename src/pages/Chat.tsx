@@ -160,16 +160,12 @@ export const Chat: React.FC = () => {
           <ScrollArea className="flex-1 p-3 lg:p-4">
             <div className="space-y-3 lg:space-y-4">
               {messages.map((message) => (
-
                 <ChatMessage
                   key={message.id}
                   message={message}
                   currentUserId={currentUser?.id}
                   isAdmin={message.is_admin}
-                  senderName={message.sender_name}
-                  senderAvatar={message.sender_avatar}
                 />
-
               ))}
               <div ref={messagesEndRef} />
             </div>
