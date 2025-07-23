@@ -20,9 +20,9 @@ interface UserSelectorProps {
   selectedUserId?: string;
 }
 
-export const UserSelector: React.FC<UserSelectorProps> = ({ 
-  onUserSelect, 
-  selectedUserId 
+export const UserSelector: React.FC<UserSelectorProps> = ({
+  onUserSelect,
+  selectedUserId
 }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);

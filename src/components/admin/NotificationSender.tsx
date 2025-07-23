@@ -167,7 +167,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
             <span className="text-sm text-muted-foreground">Priority:</span>
             {getPriorityBadge(priority)}
           </div>
-          <Button 
+          <Button
             onClick={handleSendNotification}
             disabled={isLoading || !title.trim() || !message.trim()}
             className="flex items-center space-x-2"

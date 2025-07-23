@@ -21,8 +21,8 @@ interface UserDropdownProps {
   currentUser?: any;
 }
 
-export const UserDropdown: React.FC<UserDropdownProps> = ({ 
-  onUserSelect, 
+export const UserDropdown: React.FC<UserDropdownProps> = ({
+  onUserSelect,
   selectedUserId,
   currentUser
 }) => {
@@ -36,16 +36,16 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
 
   const loadUsers = async () => {
     try {
-      // First try to load from Supabase
+      // First try to load from users table
       let supabaseUsers: User[] = [];
       try {
         let query = supabase
-          .from('user_profiles')
+          .from('users')
           .select('*')
           .order('name');
 
-        if (currentUser?.profile?.role === 'admin' || currentUser?.profile?.role === 'super') {
-          query = query.neq('user_id', currentUser.id);
+        if (currentUser?.role === 'admin' || currentUser?.role === 'super') {
+          query = query.neq('id', currentUser.id);
         } else {
           query = query.in('role', ['admin', 'super']);
         }
@@ -53,12 +53,12 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
         const { data, error } = await query;
 
         if (!error && data) {
-          supabaseUsers = data.map(profile => ({
-            id: profile.user_id,
-            name: profile.name,
-            email: profile.email || '',
-            role: profile.role,
-            avatar_url: profile.avatar_url
+          supabaseUsers = data.map(user => ({
+            id: user.id,
+            name: user.name,
+            email: user.email || '',
+            role: user.role,
+            avatar_url: user.avatar_url
           }));
         }
       } catch (supabaseError) {
@@ -91,7 +91,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
           allUsers.push(localUser);
         }
       });
-      
+
       setUsers(allUsers);
     } catch (error) {
       console.error('Error loading users:', error);
