@@ -60,10 +60,10 @@ export const Profile: React.FC = () => {
         name: formData.name,
         phone: formData.phone
       });
-      
+
       const updatedUser = { ...currentUser, name: formData.name, phone: formData.phone };
       setCurrentUser(updatedUser);
-      
+
       toast({ title: 'Success', description: 'Profile updated successfully' });
     } catch (error: any) {
       toast({

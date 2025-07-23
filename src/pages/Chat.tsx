@@ -37,6 +37,11 @@ export const Chat: React.FC = () => {
   useEffect(() => {
     if (currentUser && selectedUserId) {
       loadMessages();
+      // Set up real-time subscription
+      const subscription = setupRealtimeSubscription();
+      return () => {
+        subscription?.unsubscribe();
+      };
     }
   }, [currentUser, selectedUserId]);
 
@@ -50,6 +55,23 @@ export const Chat: React.FC = () => {
       const profile = await databaseService.getUserProfile(user.id);
       setCurrentUser({ ...user, profile });
     }
+  };
+
+  const setupRealtimeSubscription = () => {
+    if (!currentUser || !selectedUserId) return;
+
+    const { supabase } = require('@/lib/supabase');
+    return supabase
+      .channel('chat_messages')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `or(and(user_id.eq.${currentUser.id},recipient_id.eq.${selectedUserId}),and(user_id.eq.${selectedUserId},recipient_id.eq.${currentUser.id}))`
+      }, () => {
+        loadMessages();
+      })
+      .subscribe();
   };
 
   const loadMessages = async () => {
@@ -69,32 +91,30 @@ export const Chat: React.FC = () => {
     setLoading(true);
     try {
       const messageData = {
-        id: Math.random().toString(36).substr(2, 9),
         user_id: currentUser.id,
         recipient_id: selectedUserId,
-        message: newMessage.trim(),
-        created_at: new Date().toISOString()
+        message: newMessage.trim()
       };
 
       await databaseService.saveChatMessage(messageData);
 
-      // Send notification to recipient if current user is admin/super
-      if (currentUser.role === 'admin' || currentUser.role === 'super') {
-        const notificationData = {
-          id: Math.random().toString(36).substr(2, 9),
-          user_id: selectedUserId,
-          title: `New message from ${currentUser.name}`,
-          message: newMessage.trim(),
-          type: 'message',
-          priority: 'medium',
-          created_at: new Date().toISOString()
-        };
-        await databaseService.saveNotification(notificationData);
-      }
+      // Send notification to recipient
+      const notificationData = {
+        user_id: selectedUserId,
+        title: `New message from ${currentUser.profile?.name || currentUser.email}`,
+        message: newMessage.trim(),
+        type: 'message',
+        priority: 'medium'
+      };
+      await databaseService.saveNotification(notificationData);
 
       setNewMessage('');
-      loadMessages();
+      toast({
+        title: 'Message sent',
+        description: 'Your message has been delivered'
+      });
     } catch (error) {
+      console.error('Error sending message:', error);
       toast({
         title: 'Error',
         description: 'Failed to send message',
