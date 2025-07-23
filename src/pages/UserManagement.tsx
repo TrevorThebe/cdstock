@@ -81,7 +81,7 @@ export const UserManagement: React.FC = () => {
         title: 'Success',
         description: 'User added successfully'
       });
-      
+
       setNewUser({ name: '', email: '', role: 'normal' });
       setIsAddUserOpen(false);
       loadUsers();
