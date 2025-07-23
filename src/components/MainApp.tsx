@@ -11,6 +11,7 @@ import { Notifications } from '@/pages/Notifications';
 import { Admin } from '@/pages/Admin';
 import { Chat } from '@/pages/Chat';
 import { UserManagement } from '@/pages/UserManagement';
+import { UpdatePassword } from '@/pages/UpdatePassword';
 import { authService } from '@/lib/auth';
 import { storage } from '@/lib/storage';
 import { User, Product } from '@/types';
@@ -113,6 +114,8 @@ export const MainApp: React.FC = () => {
     switch (activeView) {
       case 'profile':
         return <Profile currentUser={currentUser} onUserUpdate={handleUserUpdate} />;
+      case 'update-password':
+        return <UpdatePassword />;
       case 'products':
         return <Products onEditProduct={handleEditProduct} />;
       case 'add-product':
