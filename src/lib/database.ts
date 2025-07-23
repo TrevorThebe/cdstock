@@ -57,20 +57,6 @@ export const databaseService = {
     return users.find(u => u.id === userId);
   },
 
-  export const getChatMessagesWithProfiles = async (userId: string, recipientId: string) => {
-    const { supabase } = require('@/lib/supabase');
-
-    const { data, error } = await supabase
-      .from('chat_messages_with_profiles')
-      .select('*')
-      .or(`and(user_id.eq.${userId},recipient_id.eq.${recipientId}),and(user_id.eq.${recipientId},recipient_id.eq.${userId})`)
-      .order('created_at', { ascending: true });
-
-    if (error) throw error;
-    return data;
-  };
-
-
   async getChatMessages(userId: string, recipientId: string) {
     const { data, error } = await supabase
       .from('chat_messages')
@@ -127,24 +113,6 @@ export const databaseService = {
     })) || [];
   },
 
-  // Get admin notification history (notifications sent by current user)
-  async getAdminNotificationHistory(adminUserId: string) {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select(`
-        *,
-        users!notifications_user_id_fkey(name)
-      `)
-      .eq('sender_id', adminUserId)
-      .eq('type', 'admin')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data?.map(notif => ({
-      ...notif,
-      recipient_name: notif.users?.name || 'Unknown User'
-    })) || [];
-  },
   async markNotificationRead(userId: string, notificationId: string) {
     const { error } = await supabase
       .from('read_notifications')
