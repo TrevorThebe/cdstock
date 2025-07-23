@@ -52,7 +52,7 @@ export const Admin: React.FC<AdminProps> = ({ currentUser }) => {
       const userToUpdate = { ...updatedUser, role: newRole, updatedAt: new Date().toISOString() };
       await databaseService.saveUser(userToUpdate);
       setUsers(prev => prev.map(user => user.id === userId ? userToUpdate : user));
-
+      
       toast({
         title: 'Success',
         description: `User role updated to ${newRole}`
@@ -75,7 +75,7 @@ export const Admin: React.FC<AdminProps> = ({ currentUser }) => {
       const userToUpdate = { ...updatedUser, isBlocked: block, updatedAt: new Date().toISOString() };
       await databaseService.saveUser(userToUpdate);
       setUsers(prev => prev.map(user => user.id === userId ? userToUpdate : user));
-
+      
       toast({
         title: 'Success',
         description: `User ${block ? 'blocked' : 'unblocked'} successfully`
@@ -94,14 +94,14 @@ export const Admin: React.FC<AdminProps> = ({ currentUser }) => {
     }
 
     setUsers(prev => prev.filter(user => user.id !== userId));
-
+    
     toast({
       title: 'Success',
       description: 'User deleted successfully'
     });
   };
 
-  const filteredUsers = users.filter(user =>
+  const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -243,7 +243,7 @@ export const Admin: React.FC<AdminProps> = ({ currentUser }) => {
                           <SelectItem value="super">Super</SelectItem>
                         </SelectContent>
                       </Select>
-
+                      
                       <Button
                         variant={user.isBlocked ? "default" : "destructive"}
                         size="sm"
@@ -252,7 +252,7 @@ export const Admin: React.FC<AdminProps> = ({ currentUser }) => {
                       >
                         {user.isBlocked ? 'Unblock' : 'Block'}
                       </Button>
-
+                      
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
