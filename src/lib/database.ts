@@ -3,7 +3,7 @@ import { storage } from './storage';
 import { createClient } from '@supabase/supabase-js';
 
 
-//Products
+
 
 export const databaseService = {
   async getProducts() {
@@ -57,89 +57,36 @@ export const databaseService = {
     return users.find(u => u.id === userId);
   },
 
-  async getChatMessages(userId: string, recipientId: string) {
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .select(`
-        *,
-        users!chat_messages_user_id_fkey(name, avatar_url, role)
-      `)
-      .or(`and(user_id.eq.${userId},recipient_id.eq.${recipientId}),and(user_id.eq.${recipientId},recipient_id.eq.${userId})`)
-      .order('created_at', { ascending: true });
-
-    if (error) throw error;
-    return data?.map(msg => ({
-      ...msg,
-      user_name: msg.users?.name || 'Unknown User',
-      user_avatar: msg.users?.avatar_url,
-      is_admin: msg.users?.role === 'admin'
-    })) || [];
-  },
-
-  async getUnreadMessageCount(userId: string) {
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .select('id')
-      .eq('recipient_id', userId)
-      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-
-    if (error) throw error;
-    return data?.length || 0;
-  },
-
-  // Notifications
-  async saveNotification(notification: any) {
-    const { error } = await supabase
-      .from('notifications')
-      .insert(notification);
-    if (error) throw error;
-    return true;
-  },
-
   async getNotifications(userId: string) {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select(`
-        *,
-        read_notifications!left(notification_id)
-      `)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data?.map(notif => ({
-      ...notif,
-      is_read: notif.read_notifications?.length > 0
-    })) || [];
+    // Replace this with your actual database/API call
+    // Example:
+    // return fetch(`/api/notifications?userId=${userId}`).then(res => res.json());
+    return []; // placeholder, replace with real implementation
   },
 
-  // Get admin notification history (notifications sent by current user)
-  async getAdminNotificationHistory(adminUserId: string) {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select(`
-        *,
-        users!notifications_user_id_fkey(name)
-      `)
-      .eq('sender_id', adminUserId)
-      .eq('type', 'admin')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data?.map(notif => ({
-      ...notif,
-      recipient_name: notif.users?.name || 'Unknown User'
-    })) || [];
-  },
-  async markNotificationRead(userId: string, notificationId: string) {
-    const { error } = await supabase
+  moveToReadNotifications: async (userId, notification) => {
+    // Insert into read_notifications table
+    return supabase
       .from('read_notifications')
-      .insert({ user_id: userId, notification_id: notificationId });
-    if (error) throw error;
-    return true;
+      .insert({
+        user_id: userId,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        created_at: notification.created_at,
+        read_at: new Date().toISOString(),
+        sender_id: notification.sender_id
+      });
+  },
+  deleteNotification: async (userId, notificationId) => {
+    // Remove from notifications table
+    return supabase
+      .from('notifications')
+      .delete()
+      .eq('id', notificationId)
+      .eq('user_id', userId);
   },
 
-  //get all user
   getAllUsers: async () => {
     // Fetch all users from user_profiles table
     const { data, error } = await supabase
