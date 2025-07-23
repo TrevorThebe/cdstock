@@ -57,7 +57,7 @@ export const databaseService = {
     return users.find(u => u.id === userId);
   },
 
-  /*export const getChatMessagesWithProfiles = async (userId: string, recipientId: string) => {
+  export const getChatMessagesWithProfiles = async (userId: string, recipientId: string) => {
     const { supabase } = require('@/lib/supabase');
 
     const { data, error } = await supabase
@@ -69,7 +69,7 @@ export const databaseService = {
     if (error) throw error;
     return data;
   };
-*/
+
 
   async getChatMessages(userId: string, recipientId: string) {
     const { data, error } = await supabase

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { User, Mail, Phone, Lock } from 'lucide-react';
+import { User, Mail, Phone } from 'lucide-react';
 import { authService } from '@/lib/auth';
 import { databaseService } from '@/lib/database';
 
@@ -19,23 +18,12 @@ interface User {
   role: string;
 }
 
-interface ProfileProps {
-  showPasswordUpdate?: boolean;
-}
-
-export const Profile: React.FC<ProfileProps> = ({ showPasswordUpdate }) => {
+export const Profile: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({ name: '', phone: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const { toast } = useToast();
-
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   useEffect(() => {
     getCurrentUser();
@@ -61,10 +49,6 @@ export const Profile: React.FC<ProfileProps> = ({ showPasswordUpdate }) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPasswordData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
@@ -76,10 +60,10 @@ export const Profile: React.FC<ProfileProps> = ({ showPasswordUpdate }) => {
         name: formData.name,
         phone: formData.phone
       });
-
+      
       const updatedUser = { ...currentUser, name: formData.name, phone: formData.phone };
       setCurrentUser(updatedUser);
-
+      
       toast({ title: 'Success', description: 'Profile updated successfully' });
     } catch (error: any) {
       toast({
@@ -89,32 +73,6 @@ export const Profile: React.FC<ProfileProps> = ({ showPasswordUpdate }) => {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser) return;
-
-    const { currentPassword, newPassword, confirmPassword } = passwordData;
-    if (newPassword !== confirmPassword) {
-      toast({ title: 'Error', description: 'New passwords do not match', variant: 'destructive' });
-      return;
-    }
-
-    setIsUpdatingPassword(true);
-    try {
-      await authService.updatePassword(currentUser.id, currentPassword, newPassword);
-      toast({ title: 'Success', description: 'Password updated successfully' });
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to update password',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsUpdatingPassword(false);
     }
   };
 
@@ -165,94 +123,41 @@ export const Profile: React.FC<ProfileProps> = ({ showPasswordUpdate }) => {
         </div>
       </div>
 
-      {!showPasswordUpdate && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Profile Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
-              <div>
-                <Label htmlFor="name" className="text-sm">Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1"
-                  placeholder="Enter your name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone" className="text-sm">Phone</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder="+1234567890"
-                  className="mt-1"
-                />
-              </div>
-              <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
-                {isLoading ? 'Updating...' : 'Update Profile'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      {showPasswordUpdate && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Update Password</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUpdatePassword} className="space-y-4">
-              <div>
-                <Label htmlFor="currentPassword" className="text-sm">Current Password</Label>
-                <Input
-                  id="currentPassword"
-                  name="currentPassword"
-                  type="password"
-                  value={passwordData.currentPassword}
-                  onChange={handlePasswordChange}
-                  required
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="newPassword" className="text-sm">New Password</Label>
-                <Input
-                  id="newPassword"
-                  name="newPassword"
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={handlePasswordChange}
-                  required
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="confirmPassword" className="text-sm">Confirm New Password</Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={handlePasswordChange}
-                  required
-                  className="mt-1"
-                />
-              </div>
-              <Button type="submit" disabled={isUpdatingPassword} className="w-full sm:w-auto">
-                {isUpdatingPassword ? 'Updating...' : 'Update Password'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Profile Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleUpdateProfile} className="space-y-4">
+            <div>
+              <Label htmlFor="name" className="text-sm">Name</Label>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                className="mt-1"
+                placeholder="Enter your name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone" className="text-sm">Phone</Label>
+              <Input
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                placeholder="+1234567890"
+                className="mt-1"
+              />
+            </div>
+            <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+              {isLoading ? 'Updating...' : 'Update Profile'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };
