@@ -4,103 +4,77 @@ import { User } from '@/types';
 
 export const authService = {
   async login(email: string, password: string) {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      if (error) throw error;
-      
-      if (data.user) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', data.user.id)
-          .single();
-        
-        const user: User = {
-          id: data.user.id,
-          email: data.user.email || '',
-          name: profile?.name || data.user.user_metadata?.name || 'User',
-          phone: profile?.phone || '',
-          role: profile?.role || 'normal',
-          isBlocked: false,
-          createdAt: data.user.created_at,
-          updatedAt: new Date().toISOString()
-        };
-        storage.setCurrentUser(user);
-        return user;
-      }
-    } catch (error) {
-      // Fallback to localStorage for predefined users
-      const users = storage.getUsers();
-      let user = users.find(u => u.email === email);
-      
-      // Check password for predefined users
-      if (user && (
-        (email === 'strevor@uwiniwin.co.za' && password === 'trevor') ||
-        (email === 'cosmodumpling1@gmail.com' && password === 'petunia') ||
-        u.id === password // Legacy fallback
-      )) {
-        storage.setCurrentUser(user);
-        return user;
-      }
-      throw new Error('Invalid credentials');
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    if (error) throw error;
+
+    if (data.user) {
+      // Get user from users table
+      const { data: userRecord, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', data.user.email)
+        .single();
+
+      if (userError) throw userError;
+
+      const user: User = {
+        id: data.user.id,
+        email: data.user.email || '',
+        name: userRecord?.name || data.user.user_metadata?.name || 'User',
+        phone: userRecord?.phone || '',
+        role: userRecord?.role || 'normal',
+        isBlocked: userRecord?.is_blocked || false,
+        createdAt: data.user.created_at,
+        updatedAt: new Date().toISOString()
+      };
+      storage.setCurrentUser(user);
+      return user;
     }
+    throw new Error('Login failed');
   },
 
   async register(email: string, password: string, name: string, phone?: string) {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name
-          }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name: name
         }
-      });
-      if (error) throw error;
-      
-      if (data.user) {
-        await supabase.from('user_profiles').insert({
-          user_id: data.user.id,
-          name,
-          phone,
-          role: 'normal'
-        });
-        
-        const user: User = {
-          id: data.user.id,
-          email: data.user.email || '',
-          name,
-          phone: phone || '',
-          role: 'normal',
-          isBlocked: false,
-          createdAt: data.user.created_at,
-          updatedAt: new Date().toISOString()
-        };
-        storage.setCurrentUser(user);
-        return user;
       }
-    } catch (error) {
-      // Fallback to localStorage
-      const users = storage.getUsers();
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        email,
+    });
+    if (error) throw error;
+
+    if (data.user) {
+      // Insert into users table
+      const { error: insertError } = await supabase.from('users').insert({
+        id: data.user.id,
+        email: data.user.email,
         name,
         phone,
         role: 'normal',
+        is_blocked: false
+      });
+
+      if (insertError) throw insertError;
+
+      const user: User = {
+        id: data.user.id,
+        email: data.user.email || '',
+        name,
+        phone: phone || '',
+        role: 'normal',
         isBlocked: false,
-        createdAt: new Date().toISOString(),
+        createdAt: data.user.created_at,
         updatedAt: new Date().toISOString()
       };
-      users.push(newUser);
-      storage.saveUsers(users);
-      storage.setCurrentUser(newUser);
-      return newUser;
+      storage.setCurrentUser(user);
+      return user;
     }
+    throw new Error('Registration failed');
   },
 
   getCurrentUser(): User | null {
@@ -109,6 +83,30 @@ export const authService = {
 
   async logout() {
     await supabase.auth.signOut();
-    storage.setCurrentUser(null);
+    storage.clearCurrentUser();
+  },
+
+  async refreshUserData(userId: string) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error) throw error;
+
+    const user: User = {
+      id: data.id,
+      email: data.email,
+      name: data.name,
+      phone: data.phone || '',
+      role: data.role,
+      isBlocked: data.is_blocked,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
+
+    storage.setCurrentUser(user);
+    return user;
   }
 };

@@ -32,7 +32,7 @@ export const UpdatePassword: React.FC = () => {
       } else if (currentUser.email === 'cosmodumpling1@gmail.com') {
         currentPassword = 'petunia';
       }
-
+      
       if (currentPassword) {
         setFormData(prev => ({
           ...prev,
@@ -58,7 +58,7 @@ export const UpdatePassword: React.FC = () => {
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     if (formData.newPassword !== formData.confirmPassword) {
       toast({
         title: 'Error',
@@ -89,7 +89,7 @@ export const UpdatePassword: React.FC = () => {
         title: 'Success',
         description: 'Password updated successfully'
       });
-
+      
       setFormData({
         currentPassword: '',
         newPassword: '',
@@ -205,9 +205,9 @@ export const UpdatePassword: React.FC = () => {
               </div>
             </div>
 
-            <Button
-              type="submit"
-              disabled={isLoading}
+            <Button 
+              type="submit" 
+              disabled={isLoading} 
               className="w-full"
             >
               {isLoading ? 'Updating Password...' : 'Update Password'}
