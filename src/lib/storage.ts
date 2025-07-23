@@ -1,43 +1,99 @@
-// Empty storage service - all data is now stored in Supabase only
-// This file is kept for backward compatibility but no longer stores data locally
+import { User, Product, LoginRecord, Notification } from '@/types';
 
-export const storage = {
-  // Deprecated methods - return empty data
-  getUsers: () => [],
-  saveUsers: () => { },
-  getProducts: () => [],
-  saveProducts: () => { },
-  getLoginRecords: () => [],
-  saveLoginRecords: () => { },
-  getNotifications: () => [],
-  saveNotifications: () => { },
-  getReadNotifications: () => [],
-  saveReadNotifications: () => { },
-  getChatMessages: () => [],
-  saveChatMessages: () => { },
+interface ChatMessage {
+  id: string;
+  user_id: string;
+  recipient_id: string;
+  message: string;
+  created_at: string;
+}
 
-  // Current user session - only store session info, not full user data
-  getCurrentUser: () => {
-    const session = sessionStorage.getItem('cd-stock-session');
-    return session ? JSON.parse(session) : null;
-  },
+interface ReadNotification {
+  user_id: string;
+  notification_id: string;
+}
 
-  setCurrentUser: (user: any) => {
-    if (user) {
-      // Only store minimal session data
-      const sessionData = {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role
-      };
-      sessionStorage.setItem('cd-stock-session', JSON.stringify(sessionData));
-    } else {
-      sessionStorage.removeItem('cd-stock-session');
-    }
-  },
-
-  clearCurrentUser: () => {
-    sessionStorage.removeItem('cd-stock-session');
+class LocalStorage {
+  private getItem<T>(key: string): T[] {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : [];
   }
-};
+
+  private setItem<T>(key: string, data: T[]): void {
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+
+  // Users
+  getUsers(): User[] {
+    return this.getItem<User>('cd-stock-users');
+  }
+
+  saveUsers(users: User[]): void {
+    this.setItem('cd-stock-users', users);
+  }
+
+  // Products
+  getProducts(): Product[] {
+    return this.getItem<Product>('cd-stock-products');
+  }
+
+  saveProducts(products: Product[]): void {
+    this.setItem('cd-stock-products', products);
+  }
+
+  // Login Records
+  getLoginRecords(): LoginRecord[] {
+    return this.getItem<LoginRecord>('cd-stock-logins');
+  }
+
+  saveLoginRecords(records: LoginRecord[]): void {
+    this.setItem('cd-stock-logins', records);
+  }
+
+  // Notifications
+  getNotifications(): Notification[] {
+    return this.getItem<Notification>('cd-stock-notifications');
+  }
+
+  saveNotifications(notifications: Notification[]): void {
+    this.setItem('cd-stock-notifications', notifications);
+  }
+
+  // Read Notifications
+  getReadNotifications(): ReadNotification[] {
+    return this.getItem<ReadNotification>('cd-stock-read-notifications');
+  }
+
+  saveReadNotifications(readNotifications: ReadNotification[]): void {
+    this.setItem('cd-stock-read-notifications', readNotifications);
+  }
+
+  // Chat Messages
+  getChatMessages(): ChatMessage[] {
+    return this.getItem<ChatMessage>('cd-stock-chat-messages');
+  }
+
+  saveChatMessages(messages: ChatMessage[]): void {
+    this.setItem('cd-stock-chat-messages', messages);
+  }
+
+  // Current User
+  getCurrentUser(): User | null {
+    const user = localStorage.getItem('cd-stock-current-user');
+    return user ? JSON.parse(user) : null;
+  }
+
+  setCurrentUser(user: User | null): void {
+    if (user) {
+      localStorage.setItem('cd-stock-current-user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('cd-stock-current-user');
+    }
+  }
+
+  clearCurrentUser(): void {
+    localStorage.removeItem('cd-stock-current-user');
+  }
+}
+
+export const storage = new LocalStorage();
