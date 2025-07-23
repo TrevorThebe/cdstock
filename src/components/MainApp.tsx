@@ -11,6 +11,7 @@ import { Notifications } from '@/pages/Notifications';
 import { Admin } from '@/pages/Admin';
 import { Chat } from '@/pages/Chat';
 import { UserManagement } from '@/pages/UserManagement';
+import { UpdatePassword } from '@/pages/UpdatePassword';
 import { authService } from '@/lib/auth';
 import { storage } from '@/lib/storage';
 import { User, Product } from '@/types';
