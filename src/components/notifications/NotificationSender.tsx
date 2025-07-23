@@ -49,17 +49,17 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
 
     setIsLoading(true);
     try {
-      // Get all users except the sender
+      // Get all users from users table except the sender
       const { data: users, error: usersError } = await supabase
-        .from('user_profiles')
-        .select('user_id')
-        .neq('user_id', currentUser?.id);
+        .from('users')
+        .select('id')
+        .neq('id', currentUser?.id);
 
       if (usersError) throw usersError;
 
       // Create notifications for all users
       const notifications = users?.map(user => ({
-        user_id: user.user_id,
+        user_id: user.id,
         title: formData.title,
         message: formData.message,
         type: formData.type,
@@ -93,7 +93,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
     }
   };
 
-  const isAdmin = currentUser?.profile?.role === 'admin' || currentUser?.profile?.role === 'super';
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super';
 
   if (!isAdmin) {
     return (
