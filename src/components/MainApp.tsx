@@ -113,6 +113,8 @@ export const MainApp: React.FC = () => {
     switch (activeView) {
       case 'profile':
         return <Profile currentUser={currentUser} onUserUpdate={handleUserUpdate} />;
+      case 'update-password':
+        return <UpdatePassword />;
       case 'products':
         return <Products onEditProduct={handleEditProduct} />;
       case 'add-product':
