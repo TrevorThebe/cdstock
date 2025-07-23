@@ -218,7 +218,14 @@ export const Products: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="mb-2">{product.description}</div>
-              <div className="mb-2">Quantity: {product.quantity}</div>
+              <div className={`mb-2 ${product.quantity < product.min_quantity ? 'text-red-600 font-semibold' : ''}`}>
+                Quantity: {product.quantity}
+                {product.quantity < product.min_quantity && (
+                  <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
+                    Low Stock
+                  </span>
+                )}
+              </div>
               {/* Show who last edited if available */}
               {product.updated_by && (
                 <div className="mb-2 text-xs text-muted-foreground">
