@@ -44,10 +44,10 @@ export const Dashboard: React.FC = () => {
       }));
 
       const restaurantProducts = mappedProducts.filter(
-        p => p.locationName === 'restaurant'
+        p => p.locationName?.includes('restaurant')
       );
       const bakeryProducts = mappedProducts.filter(
-        p => p.locationName === 'bakery'
+        p => p.locationName?.includes('bakery')
       );
       const lowStock = mappedProducts.filter(
         p => p.quantity <= p.min_quantity
@@ -64,6 +64,7 @@ export const Dashboard: React.FC = () => {
       );
 
       setProducts(mappedProducts);
+      console.log('Mapped Products:', mappedProducts);
       setStats({
         totalProducts: mappedProducts.length,
         lowStockItems: lowStock.length,
