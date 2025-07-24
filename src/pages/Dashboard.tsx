@@ -26,7 +26,7 @@ export const Dashboard: React.FC = () => {
         .from('products')
         .select(`
           *,
-          locations (
+          locations(
             location
           )
         `);
