@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
@@ -14,7 +13,6 @@ export const Dashboard: React.FC = () => {
     restaurantValue: 0,
     bakeryValue: 0,
   });
-  const [locationNames, setLocationNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,7 +38,7 @@ export const Dashboard: React.FC = () => {
         quantity: Number(p.quantity),
         min_quantity: Number(p.min_quantity),
         price: Number(p.price),
-        locationName: (p.location ?? p.locations?.location ?? '').trim().toLowerCase(),
+        locationName: (p.locations?.location ?? '').trim().toLowerCase(),
       }));
 
       const restaurantProducts = mappedProducts.filter(p =>
@@ -71,7 +69,6 @@ export const Dashboard: React.FC = () => {
       );
 
       setProducts(mappedProducts);
-      setLocationNames(mappedProducts.map(p => p.locationName));
       setStats({
         totalProducts: mappedProducts.length,
         lowStockItems: lowStock.length,
@@ -84,7 +81,6 @@ export const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('Error loading data:', error);
       setProducts([]);
-      setLocationNames([]);
       setStats({
         totalProducts: 0,
         lowStockItems: 0,
@@ -151,11 +147,11 @@ export const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      <div className="mt-8 p-4 bg-gray-100 rounded">
-        <h2 className="text-lg font-semibold mb-2">🔍 Debug: Mapped Location Names</h2>
-        <ul className="list-disc list-inside text-sm text-gray-700">
-          {locationNames.map((name, index) => (
-            <li key={index}>{name || '(empty)'}</li>
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-2">🔍 Debug: Mapped Location Names</h2>
+        <ul className="list-disc pl-6 text-gray-700">
+          {products.map((p, index) => (
+            <li key={index}>{p.locationName || '(empty)'}</li>
           ))}
         </ul>
       </div>
