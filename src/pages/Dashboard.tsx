@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +14,7 @@ export const Dashboard: React.FC = () => {
     restaurantValue: 0,
     bakeryValue: 0,
   });
+  const [locationNames, setLocationNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,8 +24,6 @@ export const Dashboard: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      console.log('All locations:', mappedProducts.map(p => p.locationName));
-
       const { data, error } = await supabase
         .from('products')
         .select(`
@@ -42,8 +42,6 @@ export const Dashboard: React.FC = () => {
         price: Number(p.price),
         locationName: (p.location ?? p.locations?.location ?? '').trim().toLowerCase(),
       }));
-
-      console.log('Mapped Products:', mappedProducts.map(p => p.locationName));
 
       const restaurantProducts = mappedProducts.filter(p =>
         p.locationName?.includes('restaurant')
@@ -73,6 +71,7 @@ export const Dashboard: React.FC = () => {
       );
 
       setProducts(mappedProducts);
+      setLocationNames(mappedProducts.map(p => p.locationName));
       setStats({
         totalProducts: mappedProducts.length,
         lowStockItems: lowStock.length,
@@ -85,6 +84,7 @@ export const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('Error loading data:', error);
       setProducts([]);
+      setLocationNames([]);
       setStats({
         totalProducts: 0,
         lowStockItems: 0,
@@ -129,9 +129,6 @@ export const Dashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.lowStockItems}</div>
-            {stats.lowStockItems === 0 && (
-              <div className="text-sm text-red-500 mt-1">⚠️ No items found</div>
-            )}
           </CardContent>
         </Card>
 
@@ -141,9 +138,6 @@ export const Dashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.restaurantItems}</div>
-            {stats.restaurantItems === 0 && (
-              <div className="text-sm text-red-500 mt-1">⚠️ No items found</div>
-            )}
           </CardContent>
         </Card>
 
@@ -153,11 +147,17 @@ export const Dashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.bakeryItems}</div>
-            {stats.bakeryItems === 0 && (
-              <div className="text-sm text-red-500 mt-1">⚠️ No items found</div>
-            )}
           </CardContent>
         </Card>
+      </div>
+
+      <div className="mt-8 p-4 bg-gray-100 rounded">
+        <h2 className="text-lg font-semibold mb-2">🔍 Debug: Mapped Location Names</h2>
+        <ul className="list-disc list-inside text-sm text-gray-700">
+          {locationNames.map((name, index) => (
+            <li key={index}>{name || '(empty)'}</li>
+          ))}
+        </ul>
       </div>
     </div>
   );
