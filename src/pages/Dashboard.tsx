@@ -14,6 +14,7 @@ export const Dashboard: React.FC = () => {
     bakeryValue: 0
   });
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     loadData();
@@ -35,15 +36,6 @@ export const Dashboard: React.FC = () => {
 
       // Defensive mapping for locationName
       const mappedProducts = (data || []).map((p: any) => ({
-        console.log('Raw data from Supabase:', data);
-        if(error) console.error('Supabase error:', error);
-        console.log('Mapped products:', mappedProducts);
-        console.log('Restaurant products:', restaurantProducts);
-        console.log('Bakery products:', bakeryProducts);
-        console.log('Low stock products:', lowStock);
-        console.log('Total value:', totalValue);
-        console.log('Restaurant value:', restaurantValue);
-        console.log('Bakery value:', bakeryValue);
         ...p,
         quantity: Number(p.quantity),
         min_quantity: Number(p.min_quantity),
@@ -89,6 +81,7 @@ setStats({
 });
     } catch (error) {
   setProducts([]);
+  setErrorMessage('Failed to load data from Supabase.');
   setStats({
     totalProducts: 0,
     lowStockItems: 0,
@@ -113,6 +106,12 @@ if (loading) {
 
 return (
   <div className="p-6 space-y-6">
+    {errorMessage && (
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <strong className="font-bold">Error:</strong>
+        <span className="block sm:inline"> {errorMessage}</span>
+      </div>
+    )}
     <div className="flex items-center justify-between">
       <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
     </div>
