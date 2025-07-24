@@ -35,25 +35,21 @@ export const Dashboard: React.FC = () => {
 
       // Defensive mapping for locationName
       const mappedProducts = (data || []).map((p: any) => ({
+        console.log('Mapped location names:', mappedProducts.map(p => p.locationName));
         ...p,
         quantity: Number(p.quantity),
         min_quantity: Number(p.min_quantity),
-        locationName: p.locations?.location
+        locationName: (p.locations?.location || p.location || '').trim().toLowerCase(),
           ? String(p.locations.location).trim().toLowerCase()
-          : (p.location || '').toLowerCase(),
+        : (p.location || '').toLowerCase(),
       }));
-      console.log('Mapped location names:', mappedProducts.map(p => p.locationName));
 
-      const restaurantProducts = mappedProducts.filter(
-        p => p.locationName?.includes('restaurant')
-      );
-      p => p.locationName?.includes('restaurant')
+    const restaurantProducts = mappedProducts.filter(
+        const restaurantProducts = mappedProducts.filter(p => p.locationName?.includes('restaurant'));
       );
       );
 const bakeryProducts = mappedProducts.filter(
-  p => p.locationName?.includes('bakery')
-);
-p => p.locationName?.includes('bakery')
+        const bakeryProducts = mappedProducts.filter(p => p.locationName?.includes('bakery'));
 );
       );
 const lowStock = mappedProducts.filter(
@@ -124,6 +120,9 @@ return (
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.lowStockItems}</div>
+          {stats.lowStockItems === 0 && (
+            <div className="text-sm text-red-500 mt-1">⚠️ No items found</div>
+          )}}
         </CardContent>
       </Card>
       <Card>
@@ -132,6 +131,9 @@ return (
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.restaurantItems}</div>
+          {stats.restaurantItems === 0 && (
+            <div className="text-sm text-red-500 mt-1">⚠️ No items found</div>
+          )}}
         </CardContent>
       </Card>
       <Card>
@@ -140,6 +142,9 @@ return (
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.bakeryItems}</div>
+          {stats.bakeryItems === 0 && (
+            <div className="text-sm text-red-500 mt-1">⚠️ No items found</div>
+          )}}
         </CardContent>
       </Card>
     </div>
