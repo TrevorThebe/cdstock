@@ -35,6 +35,15 @@ export const Dashboard: React.FC = () => {
 
       // Defensive mapping for locationName
       const mappedProducts = (data || []).map((p: any) => ({
+        console.log('Raw data from Supabase:', data);
+        if(error) console.error('Supabase error:', error);
+        console.log('Mapped products:', mappedProducts);
+        console.log('Restaurant products:', restaurantProducts);
+        console.log('Bakery products:', bakeryProducts);
+        console.log('Low stock products:', lowStock);
+        console.log('Total value:', totalValue);
+        console.log('Restaurant value:', restaurantValue);
+        console.log('Bakery value:', bakeryValue);
         ...p,
         quantity: Number(p.quantity),
         min_quantity: Number(p.min_quantity),
@@ -108,30 +117,6 @@ return (
       <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Total Inventory Value</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">${stats.totalValue.toFixed(2)}</div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Restaurant Inventory Value</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">${stats.restaurantValue.toFixed(2)}</div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Bakery Inventory Value</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">${stats.bakeryValue.toFixed(2)}</div>
-        </CardContent>
-      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Total Products</CardTitle>
