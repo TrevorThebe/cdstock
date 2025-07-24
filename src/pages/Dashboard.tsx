@@ -26,7 +26,7 @@ export const Dashboard: React.FC = () => {
         .from('products')
         .select(`
           *,
-          locations(
+          locations (
             location
           )
         `);
@@ -38,10 +38,10 @@ export const Dashboard: React.FC = () => {
         quantity: Number(p.quantity),
         min_quantity: Number(p.min_quantity),
         price: Number(p.price),
-        locationName: p.locations?.location
-          ? String(p.locations.location).trim().toLowerCase()
-          : (p.location ?? '').trim().toLowerCase(),
+        locationName: (p.location ?? p.locations?.location ?? '').trim().toLowerCase(),
       }));
+
+      console.log('Mapped Products:', mappedProducts.map(p => p.locationName));
 
       const restaurantProducts = mappedProducts.filter(p =>
         p.locationName?.includes('restaurant')
