@@ -110,6 +110,30 @@ return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <Card>
         <CardHeader>
+          <CardTitle>Total Inventory Value</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">${stats.totalValue.toFixed(2)}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Restaurant Inventory Value</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">${stats.restaurantValue.toFixed(2)}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Bakery Inventory Value</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">${stats.bakeryValue.toFixed(2)}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
           <CardTitle>Total Products</CardTitle>
         </CardHeader>
         <CardContent>
