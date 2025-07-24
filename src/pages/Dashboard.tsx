@@ -49,10 +49,12 @@ export const Dashboard: React.FC = () => {
       );
       p => p.locationName?.includes('restaurant')
       );
+      );
 const bakeryProducts = mappedProducts.filter(
   p => p.locationName?.includes('bakery')
 );
 p => p.locationName?.includes('bakery')
+);
       );
 const lowStock = mappedProducts.filter(
   p => p.quantity <= p.min_quantity
