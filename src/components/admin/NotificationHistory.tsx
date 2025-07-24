@@ -27,7 +27,7 @@ export const NotificationHistory: React.FC<NotificationHistoryProps> = ({ curren
       const allNotifications = storage.getNotifications();
       // Filter to show only admin-sent notifications
       const adminNotifications = allNotifications.filter(n => n.type === 'admin');
-      setNotifications(adminNotifications.sort((a, b) =>
+      setNotifications(adminNotifications.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       ));
     } catch (error) {
@@ -107,7 +107,7 @@ export const NotificationHistory: React.FC<NotificationHistoryProps> = ({ curren
                         {getPriorityBadge(notification.priority)}
                       </div>
                     </div>
-
+                    
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center space-x-1">
