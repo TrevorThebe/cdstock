@@ -14,7 +14,6 @@ export const Dashboard: React.FC = () => {
     bakeryValue: 0
   });
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     loadData();
@@ -46,14 +45,14 @@ export const Dashboard: React.FC = () => {
       console.log('Mapped location names:', mappedProducts.map(p => p.locationName));
 
       const restaurantProducts = mappedProducts.filter(
-const restaurantProducts = mappedProducts.filter(
         p => p.locationName?.includes('restaurant')
       );
+      p => p.locationName?.includes('restaurant')
       );
-const bakeryProducts = mappedProducts.filter(
 const bakeryProducts = mappedProducts.filter(
   p => p.locationName?.includes('bakery')
 );
+p => p.locationName?.includes('bakery')
       );
 const lowStock = mappedProducts.filter(
   p => p.quantity <= p.min_quantity
@@ -81,7 +80,6 @@ setStats({
 });
     } catch (error) {
   setProducts([]);
-  setErrorMessage('Failed to load data from Supabase.');
   setStats({
     totalProducts: 0,
     lowStockItems: 0,
@@ -106,12 +104,6 @@ if (loading) {
 
 return (
   <div className="p-6 space-y-6">
-    {errorMessage && (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-        <strong className="font-bold">Error:</strong>
-        <span className="block sm:inline"> {errorMessage}</span>
-      </div>
-    )}
     <div className="flex items-center justify-between">
       <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
     </div>
