@@ -22,6 +22,8 @@ export const Dashboard: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
+      console.log('All locations:', mappedProducts.map(p => p.locationName));
+
       const { data, error } = await supabase
         .from('products')
         .select(`
