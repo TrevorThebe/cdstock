@@ -28,9 +28,7 @@ export const Dashboard: React.FC = () => {
         .select(`
           *,
           locations (
-            id,
-            type,
-            location
+            type
           )
         `);
 
@@ -42,7 +40,6 @@ export const Dashboard: React.FC = () => {
         min_quantity: Number(p.min_quantity),
         price: Number(p.price),
         locationType: (p.locations?.type ?? '').trim().toLowerCase(),
-        locationName: (p.locations?.location ?? '').trim().toLowerCase(),
       }));
 
       const restaurantProducts = mappedProducts.filter(p =>
@@ -152,12 +149,10 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-2">🔍 Debug: Mapped Products</h2>
+        <h2 className="text-xl font-semibold mb-2">🔍 Debug: Mapped Location Types</h2>
         <ul className="list-disc pl-6 text-gray-700">
           {products.map((p, index) => (
-            <li key={index}>
-              ID: {p.id}, Location ID: {p.location}, Type: {p.locationType}, Name: {p.locationName}
-            </li>
+            <li key={index}>{p.locationType || '(empty)'}</li>
           ))}
         </ul>
       </div>
