@@ -115,7 +115,7 @@ export const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
-          <CardHeader>
+<CardTitle>Total Products</CardTitle>
             <CardTitle>Total Products</CardTitle>
           </CardHeader>
           <CardContent>
@@ -124,7 +124,7 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         <Card>
-          <CardHeader>
+<CardTitle>Low Stock Items</CardTitle>
             <CardTitle>Low Stock Items</CardTitle>
           </CardHeader>
           <CardContent>
@@ -133,7 +133,7 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         <Card>
-          <CardHeader>
+<CardTitle>Restaurant Items</CardTitle>
             <CardTitle>Restaurant Items</CardTitle>
           </CardHeader>
           <CardContent>
@@ -142,7 +142,7 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         <Card>
-          <CardHeader>
+<CardTitle>Bakery Items</CardTitle>
             <CardTitle>Bakery Items</CardTitle>
           </CardHeader>
           <CardContent>
@@ -152,15 +152,6 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-2">🔍 Debug: Mapped Products</h2>
-        <ul className="list-disc pl-6 text-gray-700">
-          {products.map((p, index) => (
-            <li key={index}>
-              ID: {p.id}, Location ID: {p.location}, Type: {p.locationType}, Name: {p.locationName}
-            </li>
-          ))}
-        </ul>
-      </div>
     </div>
   );
 };
