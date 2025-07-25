@@ -44,11 +44,11 @@ export const Dashboard: React.FC = () => {
       }));
 
       const restaurantProducts = mappedProducts.filter(p =>
-        p.locationName?.includes('restaurant')
+        p.locationType?.includes('restaurant')
       );
 
       const bakeryProducts = mappedProducts.filter(p =>
-        p.locationName?.includes('bakery')
+        p.locationType?.includes('bakery')
       );
 
       const lowStock = mappedProducts.filter(
