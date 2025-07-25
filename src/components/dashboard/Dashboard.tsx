@@ -1,157 +1,114 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
+import { Package, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
-  const [stats, setStats] = useState({
-    totalProducts: 0,
-    lowStockItems: 0,
-    restaurantItems: 0,
-    bakeryItems: 0,
-    totalValue: 0,
-    restaurantValue: 0,
-    bakeryValue: 0,
-  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
+    loadProducts();
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadProducts = async () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          locations (
-            id,
-            type,
-            location
-          )
-        `);
-
+        .select('*')
+        .order('created_at', { ascending: false });
+      
       if (error) throw error;
-
-      const mappedProducts = (data ?? []).map((p: any) => ({
-        ...p,
-        quantity: Number(p.quantity),
-        min_quantity: Number(p.min_quantity),
-        price: Number(p.price),
-        locationType: (p.locations?.type ?? '').trim().toLowerCase(),
-        locationName: (p.locations?.location ?? '').trim().toLowerCase(),
-      }));
-
-      const restaurantProducts = mappedProducts.filter(p =>
-        p.locationType === 'restaurant'
-      );
-
-      const bakeryProducts = mappedProducts.filter(p =>
-        p.locationType === 'bakery'
-      );
-
-      const lowStock = mappedProducts.filter(
-        p => p.quantity <= p.min_quantity
-      );
-
-      const totalValue = mappedProducts.reduce(
-        (sum, p) => sum + (p.price * p.quantity),
-        0
-      );
-
-      const restaurantValue = restaurantProducts.reduce(
-        (sum, p) => sum + (p.price * p.quantity),
-        0
-      );
-
-      const bakeryValue = bakeryProducts.reduce(
-        (sum, p) => sum + (p.price * p.quantity),
-        0
-      );
-
-      setProducts(mappedProducts);
-      setStats({
-        totalProducts: mappedProducts.length,
-        lowStockItems: lowStock.length,
-        restaurantItems: restaurantProducts.length,
-        bakeryItems: bakeryProducts.length,
-        totalValue,
-        restaurantValue,
-        bakeryValue,
-      });
+      setProducts(data || []);
     } catch (error) {
-      console.error('Error loading data:', error);
-      setProducts([]);
-      setStats({
-        totalProducts: 0,
-        lowStockItems: 0,
-        restaurantItems: 0,
-        bakeryItems: 0,
-        totalValue: 0,
-        restaurantValue: 0,
-        bakeryValue: 0,
-      });
+      console.error('Error loading products:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const lowStockProducts = products.filter(p => p.quantity <= p.min_quantity);
+  const restaurantProducts = products.filter(p => p.location_type === 'restaurant');
+  const bakeryProducts = products.filter(p => p.location_type === 'bakery');
+
   if (loading) {
-    return (
-      <div className="p-6 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <div className="p-6"><div className="text-lg">Loading dashboard...</div></div>;
   }
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-      </div>
+      <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Total Products</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProducts}</div>
+            <div className="text-2xl font-bold">{products.length}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Low Stock Items</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.lowStockItems}</div>
+            <div className="text-2xl font-bold text-red-600">{lowStockProducts.length}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Restaurant Items</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Restaurant Items</CardTitle>
+            <TrendingUp className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.restaurantItems}</div>
+            <div className="text-2xl font-bold">{restaurantProducts.length}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Bakery Items</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Bakery Items</CardTitle>
+            <TrendingDown className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.bakeryItems}</div>
+            <div className="text-2xl font-bold">{bakeryProducts.length}</div>
           </CardContent>
         </Card>
       </div>
 
-     
+      {lowStockProducts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Low Stock Alert
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {lowStockProducts.slice(0, 5).map((product) => (
+                <div key={product.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{product.name}</p>
+                    <p className="text-sm text-gray-600">
+                      Current: {product.quantity} | Min: {product.min_quantity}
+                    </p>
+                  </div>
+                  <Badge variant="destructive" className="capitalize">
+                    {product.location_type || 'Unknown'}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
