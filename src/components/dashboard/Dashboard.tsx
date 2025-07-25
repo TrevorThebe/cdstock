@@ -15,6 +15,13 @@ export const Dashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
 
+  // Map of location IDs to their types
+  const locationTypeMap: { [key: string]: 'restaurant' | 'bakery' } = {
+    'loc1': 'restaurant',
+    'loc2': 'bakery',
+    // Add more mappings as needed
+  };
+
   useEffect(() => {
     loadData();
   }, []);
@@ -33,40 +40,26 @@ export const Dashboard: React.FC = () => {
 
       if (error) throw error;
 
-      const mappedProducts = (data ?? []).map((p: any) => ({
-        ...p,
-        quantity: Number(p.quantity),
-        min_quantity: Number(p.min_quantity),
-        price: Number(p.price),
-        locationName: (p.locations?.location ?? '').trim().toLowerCase(),
-      }));
+      const mappedProducts = (data ?? []).map((p: any) => {
+        const locationId = p.locations?.location ?? '';
+        const locationType = locationTypeMap[locationId] ?? 'unknown';
+        return {
+          ...p,
+          quantity: Number(p.quantity),
+          min_quantity: Number(p.min_quantity),
+          price: Number(p.price),
+          locationId,
+          locationType,
+        };
+      });
 
-      const restaurantProducts = mappedProducts.filter(p =>
-        p.locationName?.includes('restaurant')
-      );
+      const restaurantProducts = mappedProducts.filter(p => p.locationType === 'restaurant');
+      const bakeryProducts = mappedProducts.filter(p => p.locationType === 'bakery');
+      const lowStock = mappedProducts.filter(p => p.quantity <= p.min_quantity);
 
-      const bakeryProducts = mappedProducts.filter(p =>
-        p.locationName?.includes('bakery')
-      );
-
-      const lowStock = mappedProducts.filter(
-        p => p.quantity <= p.min_quantity
-      );
-
-      const totalValue = mappedProducts.reduce(
-        (sum, p) => sum + (p.price * p.quantity),
-        0
-      );
-
-      const restaurantValue = restaurantProducts.reduce(
-        (sum, p) => sum + (p.price * p.quantity),
-        0
-      );
-
-      const bakeryValue = bakeryProducts.reduce(
-        (sum, p) => sum + (p.price * p.quantity),
-        0
-      );
+      const totalValue = mappedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+      const restaurantValue = restaurantProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+      const bakeryValue = bakeryProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
 
       setProducts(mappedProducts);
       setStats({
@@ -148,6 +141,13 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-2">🔍 Debug: Location Types</h2>
+        <ul className="list-disc pl-6 text-gray-700">
+          {products.map((p, index) => (
+            <li key={index}>{p.locationId} → {p.locationType}</li>
+          ))}
+        </ul>
       </div>
-      );
+    </div>
+  );
 };
