@@ -43,7 +43,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
         .from('products')
         .select('*')
         .order('updated_at', { ascending: false });
-      
+
       if (error) throw error;
       setProducts(data || []);
     } catch (error) {
@@ -61,9 +61,9 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
         .from('products')
         .update({ quantity: newQuantity, updated_at: new Date().toISOString() })
         .eq('id', product.id);
-      
+
       if (error) throw error;
-      
+
       setProducts(prev => prev.map(p => p.id === product.id ? { ...p, quantity: newQuantity } : p));
       toast({ title: 'Success', description: 'Quantity updated' });
     } catch (error) {
@@ -76,15 +76,15 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
       toast({ title: 'Error', description: 'Only admins can delete products', variant: 'destructive' });
       return;
     }
-    
+
     try {
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', productId);
-      
+
       if (error) throw error;
-      
+
       setProducts(prev => prev.filter(p => p.id !== productId));
       toast({ title: 'Success', description: 'Product deleted' });
     } catch (error) {
@@ -94,13 +94,13 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+
     if (activeTab === 'all') return matchesSearch;
     if (activeTab === 'restaurant') return matchesSearch && product.location_type === 'restaurant';
     if (activeTab === 'bakery') return matchesSearch && product.location_type === 'bakery';
     if (activeTab === 'low-stock') return matchesSearch && (product.quantity || 0) <= (product.min_quantity || 0);
-    
+
     return matchesSearch;
   });
 
@@ -121,12 +121,12 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Products</h1>
       </div>
-      
+
       <div className="relative">
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input 
-          placeholder="Search products..." 
-          value={searchTerm} 
+        <Input
+          placeholder="Search products..."
+          value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"
         />
@@ -164,8 +164,8 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Quantity:</span>
                       <div className="flex items-center gap-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleQuantityUpdate(product, -1)}
                           disabled={(product.quantity || 0) <= 0}
@@ -175,8 +175,8 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
                         <span className={`font-bold ${isLowStock ? 'text-red-600' : ''}`}>
                           {product.quantity || 0}
                         </span>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleQuantityUpdate(product, 1)}
                         >
@@ -184,12 +184,12 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
                         </Button>
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-between text-sm">
-                      <span>Price: ${product.price || 0}</span>
+                      <span>Price: R{product.price || 0}</span>
                       <span>Min: {product.min_quantity || 0}</span>
                     </div>
-                    
+
                     <div className="flex gap-2">
                       {onEditProduct && (
                         <Button size="sm" variant="outline" onClick={() => onEditProduct(product)}>
@@ -197,9 +197,9 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
                         </Button>
                       )}
                       {(currentUser?.role === 'admin' || currentUser?.role === 'super') && (
-                        <Button 
-                          size="sm" 
-                          variant="destructive" 
+                        <Button
+                          size="sm"
+                          variant="destructive"
                           onClick={() => handleDeleteProduct(product.id)}
                         >
                           <Trash2 className="h-3 w-3 mr-1" /> Delete
@@ -211,7 +211,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
               );
             })}
           </div>
-          
+
           {filteredProducts.length === 0 && (
             <div className="text-center py-12">
               <p className="text-muted-foreground">No products found matching your criteria.</p>
