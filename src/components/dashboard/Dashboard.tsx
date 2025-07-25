@@ -16,11 +16,25 @@ export const Dashboard: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          locations (
+            id,
+            type,
+            location
+          )
+        `)
         .order('updated_at', { ascending: true });
-      
+
       if (error) throw error;
-      setProducts(data || []);
+
+      const mappedProducts = (data ?? []).map((p: any) => ({
+        ...p,
+        locationType: (p.locations?.type ?? '').toLowerCase(),
+        locationName: (p.locations?.location ?? '').toLowerCase(),
+      }));
+
+      setProducts(mappedProducts);
     } catch (error) {
       console.error('Error loading products:', error);
     } finally {
@@ -29,8 +43,8 @@ export const Dashboard: React.FC = () => {
   };
 
   const lowStockProducts = products.filter(p => p.quantity <= (p.min_quantity || 0));
-  const restaurantProducts = products.filter(p => p.location_type === 'restaurant');
-  const bakeryProducts = products.filter(p => p.location_type === 'bakery');
+  const restaurantProducts = products.filter(p => p.locationType === 'restaurant');
+  const bakeryProducts = products.filter(p => p.locationType === 'bakery');
 
   if (loading) {
     return <div className="p-6"><div className="text-lg">Loading dashboard...</div></div>;
@@ -67,7 +81,7 @@ export const Dashboard: React.FC = () => {
             <TrendingUp className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{restaurantProducts.length}</div>
+            <div className="text-2xl font-bold text-blue-600">{restaurantProducts.length}</div>
           </CardContent>
         </Card>
 
@@ -77,7 +91,7 @@ export const Dashboard: React.FC = () => {
             <TrendingDown className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{bakeryProducts.length}</div>
+            <div className="text-2xl font-bold text-green-600">{bakeryProducts.length}</div>
           </CardContent>
         </Card>
       </div>
@@ -85,24 +99,17 @@ export const Dashboard: React.FC = () => {
       {lowStockProducts.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              Low Stock Alert
-            </CardTitle>
+            <CardTitle className="text-lg font-semibold text-red-600">Low Stock Alert</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {lowStockProducts.slice(0, 5).map((product) => (
-                <div key={product.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">{product.name}</p>
-                    <p className="text-sm text-gray-600">
-                      Current: {product.quantity} | Min: {product.min_quantity}
-                    </p>
+              {lowStockProducts.map((product) => (
+                <div key={product.id} className="flex items-center justify-between p-2 bg-red-50 rounded">
+                  <span className="font-medium">{product.name}</span>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="destructive">{product.quantity} left</Badge>
+                    <span className="text-sm text-gray-600">Min: {product.min_quantity}</span>
                   </div>
-                  <Badge variant="destructive" className="capitalize">
-                    {product.location_type || 'Unknown'}
-                  </Badge>
                 </div>
               ))}
             </div>
@@ -112,3 +119,5 @@ export const Dashboard: React.FC = () => {
     </div>
   );
 };
+
+export default Dashboard;
