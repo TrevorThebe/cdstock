@@ -115,7 +115,7 @@ export const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
-<CardTitle>Total Products</CardTitle>
+          <CardHeader>
             <CardTitle>Total Products</CardTitle>
           </CardHeader>
           <CardContent>
@@ -124,7 +124,7 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         <Card>
-<CardTitle>Low Stock Items</CardTitle>
+          <CardHeader>
             <CardTitle>Low Stock Items</CardTitle>
           </CardHeader>
           <CardContent>
@@ -133,7 +133,7 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         <Card>
-<CardTitle>Restaurant Items</CardTitle>
+          <CardHeader>
             <CardTitle>Restaurant Items</CardTitle>
           </CardHeader>
           <CardContent>
@@ -142,7 +142,7 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         <Card>
-<CardTitle>Bakery Items</CardTitle>
+          <CardHeader>
             <CardTitle>Bakery Items</CardTitle>
           </CardHeader>
           <CardContent>
@@ -151,7 +151,7 @@ export const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      <div className="mt-8">
+     
     </div>
   );
 };
