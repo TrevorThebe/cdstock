@@ -17,7 +17,7 @@ export const Dashboard: React.FC = () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('updated_at', { ascending: true });
       
       if (error) throw error;
       setProducts(data || []);
@@ -28,7 +28,7 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const lowStockProducts = products.filter(p => p.quantity <= p.min_quantity);
+  const lowStockProducts = products.filter(p => p.quantity <= (p.min_quantity || 0));
   const restaurantProducts = products.filter(p => p.location_type === 'restaurant');
   const bakeryProducts = products.filter(p => p.location_type === 'bakery');
 
