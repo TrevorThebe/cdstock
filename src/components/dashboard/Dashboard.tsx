@@ -109,19 +109,7 @@ export const Dashboard: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
       </div>
 
-      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-white shadow-md border border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-blue-600">User Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-gray-700">Welcome back, Admin!</div>
-          </CardContent>
-        </Card>
-      </div>
-
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Total Products</CardTitle>
@@ -159,6 +147,7 @@ export const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      
-  );
+      <div className="mt-8">
+      </div>
+      );
 };
