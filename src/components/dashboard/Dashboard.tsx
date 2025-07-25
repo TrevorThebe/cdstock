@@ -148,14 +148,6 @@ export const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      <div className="mt-8" style="display:none;">
-        <h2 className="text-xl font-semibold mb-2">🔍 Debug: Mapped Location Types</h2>
-        <ul className="list-disc pl-6 text-gray-700">
-          {products.map((p, index) => (
-            <li key={index}>{p.locationType || '(empty)'}</li>
-          ))}
-        </ul>
-      </div>
       {currentUser && (
         <Card>
           <CardHeader>
