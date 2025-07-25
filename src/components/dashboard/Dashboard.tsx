@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
@@ -28,7 +27,7 @@ export const Dashboard: React.FC = () => {
         .select(`
           *,
           locations (
-            type
+            location
           )
         `);
 
@@ -39,15 +38,15 @@ export const Dashboard: React.FC = () => {
         quantity: Number(p.quantity),
         min_quantity: Number(p.min_quantity),
         price: Number(p.price),
-        locationType: (p.locations?.type ?? '').trim().toLowerCase(),
+        locationName: (p.locations?.location ?? '').trim().toLowerCase(),
       }));
 
       const restaurantProducts = mappedProducts.filter(p =>
-        p.locationType === 'restaurant'
+        p.locationName?.includes('restaurant')
       );
 
       const bakeryProducts = mappedProducts.filter(p =>
-        p.locationType === 'bakery'
+        p.locationName?.includes('bakery')
       );
 
       const lowStock = mappedProducts.filter(
@@ -110,6 +109,18 @@ export const Dashboard: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
       </div>
 
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="bg-white shadow-md border border-gray-200">
+          <CardHeader>
+            <CardTitle className="text-blue-600">User Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-gray-700">Welcome back, Admin!</div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader>
@@ -148,31 +159,6 @@ export const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      {currentUser && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <Avatar className="h-10 w-10 lg:h-12 lg:w-12">
-                <AvatarImage src={currentUser.avatar_url} />
-                <AvatarFallback>
-                  {currentUser.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-lg lg:text-xl">Welcome back, {currentUser.name}!</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-              <p className="text-muted-foreground text-sm">
-                Role: <Badge variant="outline">{currentUser.role}</Badge>
-              </p>
-              <p className="text-muted-foreground text-sm truncate">
-                Email: {currentUser.email}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+
+      );
 };
