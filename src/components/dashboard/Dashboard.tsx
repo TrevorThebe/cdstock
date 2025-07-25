@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
@@ -27,6 +28,8 @@ export const Dashboard: React.FC = () => {
         .select(`
           *,
           locations (
+            id,
+            type,
             location
           )
         `);
@@ -38,15 +41,16 @@ export const Dashboard: React.FC = () => {
         quantity: Number(p.quantity),
         min_quantity: Number(p.min_quantity),
         price: Number(p.price),
+        locationType: (p.locations?.type ?? '').trim().toLowerCase(),
         locationName: (p.locations?.location ?? '').trim().toLowerCase(),
       }));
 
       const restaurantProducts = mappedProducts.filter(p =>
-        p.locationName?.includes('restaurant')
+        p.locationType === 'restaurant'
       );
 
       const bakeryProducts = mappedProducts.filter(p =>
-        p.locationName?.includes('bakery')
+        p.locationType === 'bakery'
       );
 
       const lowStock = mappedProducts.filter(
@@ -148,6 +152,15 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-2">🔍 Debug: Mapped Products</h2>
+        <ul className="list-disc pl-6 text-gray-700">
+          {products.map((p, index) => (
+            <li key={index}>
+              ID: {p.id}, Location ID: {p.location}, Type: {p.locationType}, Name: {p.locationName}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
