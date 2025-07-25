@@ -41,21 +41,13 @@ export const Dashboard: React.FC = () => {
         locationName: (p.locations?.location ?? '').trim().toLowerCase(),
       }));
 
-      
-      const locationTypeMap: { [key: string]: string } = {
-        'loc1': 'restaurant',
-        'loc2': 'bakery',
-        // Add more mappings as needed
-      };
-
       const restaurantProducts = mappedProducts.filter(p =>
-        locationTypeMap[p.location] === 'restaurant'
+        p.locationName === 'restaurant'
       );
 
       const bakeryProducts = mappedProducts.filter(p =>
-        locationTypeMap[p.location] === 'bakery'
+        p.locationName === 'bakery'
       );
-
 
       const lowStock = mappedProducts.filter(
         p => p.quantity <= p.min_quantity
