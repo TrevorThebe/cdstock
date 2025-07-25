@@ -101,6 +101,17 @@ export const Dashboard: React.FC = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
       </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="bg-white shadow-md border border-gray-200">
+          <CardHeader>
+            <CardTitle className="text-blue-600">User Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-gray-700">Welcome back, Admin!</div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
@@ -140,14 +151,8 @@ export const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-2">🔍 Debug: Location Types</h2>
-        <ul className="list-disc pl-6 text-gray-700">
-          {products.map((p, index) => (
-            <li key={index}>{p.locationId} → {p.locationType}</li>
-          ))}
-        </ul>
-      </div>
+      
+
     </div>
   );
 };
