@@ -15,13 +15,6 @@ export const Dashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  // Map of location IDs to their types
-  const locationTypeMap: { [key: string]: 'restaurant' | 'bakery' } = {
-    'loc1': 'restaurant',
-    'loc2': 'bakery',
-    // Add more mappings as needed
-  };
-
   useEffect(() => {
     loadData();
   }, []);
@@ -40,26 +33,40 @@ export const Dashboard: React.FC = () => {
 
       if (error) throw error;
 
-      const mappedProducts = (data ?? []).map((p: any) => {
-        const locationId = p.locations?.location ?? '';
-        const locationType = locationTypeMap[locationId] ?? 'unknown';
-        return {
-          ...p,
-          quantity: Number(p.quantity),
-          min_quantity: Number(p.min_quantity),
-          price: Number(p.price),
-          locationId,
-          locationType,
-        };
-      });
+      const mappedProducts = (data ?? []).map((p: any) => ({
+        ...p,
+        quantity: Number(p.quantity),
+        min_quantity: Number(p.min_quantity),
+        price: Number(p.price),
+        locationName: (p.locations?.location ?? '').trim().toLowerCase(),
+      }));
 
-      const restaurantProducts = mappedProducts.filter(p => p.locationType === 'restaurant');
-      const bakeryProducts = mappedProducts.filter(p => p.locationType === 'bakery');
-      const lowStock = mappedProducts.filter(p => p.quantity <= p.min_quantity);
+      const restaurantProducts = mappedProducts.filter(p =>
+        p.locationName?.includes('restaurant')
+      );
 
-      const totalValue = mappedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
-      const restaurantValue = restaurantProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
-      const bakeryValue = bakeryProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+      const bakeryProducts = mappedProducts.filter(p =>
+        p.locationName?.includes('bakery')
+      );
+
+      const lowStock = mappedProducts.filter(
+        p => p.quantity <= p.min_quantity
+      );
+
+      const totalValue = mappedProducts.reduce(
+        (sum, p) => sum + (p.price * p.quantity),
+        0
+      );
+
+      const restaurantValue = restaurantProducts.reduce(
+        (sum, p) => sum + (p.price * p.quantity),
+        0
+      );
+
+      const bakeryValue = bakeryProducts.reduce(
+        (sum, p) => sum + (p.price * p.quantity),
+        0
+      );
 
       setProducts(mappedProducts);
       setStats({
@@ -101,17 +108,6 @@ export const Dashboard: React.FC = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-white shadow-md border border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-blue-600">User Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-gray-700">Welcome back, Admin!</div>
-          </CardContent>
-        </Card>
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
@@ -151,8 +147,15 @@ export const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      
-
-    </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="bg-white shadow-md border border-gray-200">
+          <CardHeader>
+            <CardTitle className="text-blue-600">User Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-gray-700">Welcome back, Admin!</div>
+          </CardContent>
+        </Card>
+      </div>
   );
 };
