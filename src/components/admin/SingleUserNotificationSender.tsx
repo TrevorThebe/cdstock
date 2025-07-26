@@ -8,16 +8,17 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { databaseService } from '@/lib/database';
 import { User } from '@/types';
-import { Send, Users, Bell } from 'lucide-react';
+import { Send, UserCheck } from 'lucide-react';
 
-interface NotificationSenderProps {
+interface SingleUserNotificationSenderProps {
   currentUser: User;
 }
 
-export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentUser }) => {
+export const SingleUserNotificationSender: React.FC<SingleUserNotificationSenderProps> = ({ currentUser }) => {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [priority, setPriority] = useState('normal');
+  const [selectedUserId, setSelectedUserId] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -36,55 +37,47 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
   };
 
   const handleSendNotification = async () => {
-    if (!title.trim() || !message.trim()) {
+    if (!title.trim() || !message.trim() || !selectedUserId) {
       toast({
         title: 'Error',
-        description: 'Please fill in both title and message',
+        description: 'Please fill in all fields and select a user',
         variant: 'destructive'
       });
       return;
     }
 
     setIsLoading(true);
-    let successCount = 0;
-    const totalCount = users.length;
 
     try {
-      // Send to all users in the database
-      for (const user of users) {
-        const notification = {
-          id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          user_id: user.id,
-          title: title.trim(),
-          message: message.trim(),
-          priority,
-          type: 'admin',
-          created_at: new Date().toISOString(),
-          sender_id: currentUser.id,
-          sender_name: currentUser.name
-        };
+      const selectedUser = users.find(u => u.id === selectedUserId);
+      const notification = {
+        id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        user_id: selectedUserId,
+        title: title.trim(),
+        message: message.trim(),
+        priority,
+        type: 'admin',
+        created_at: new Date().toISOString(),
+        sender_id: currentUser.id,
+        sender_name: currentUser.name
+      };
 
-        try {
-          await databaseService.saveNotification(notification);
-          successCount++;
-        } catch (error) {
-          console.error(`Failed to send notification to user ${user.id}:`, error);
-        }
-      }
+      await databaseService.saveNotification(notification);
 
       toast({
-        title: 'Notifications Sent',
-        description: `Successfully sent ${successCount}/${totalCount} notifications to all users`
+        title: 'Notification Sent',
+        description: `Successfully sent notification to ${selectedUser?.name || 'selected user'}`
       });
 
       // Reset form
       setTitle('');
       setMessage('');
       setPriority('normal');
+      setSelectedUserId('');
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to send notifications',
+        description: 'Failed to send notification',
         variant: 'destructive'
       });
     } finally {
@@ -100,15 +93,36 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
     }
   };
 
+  const selectedUser = users.find(u => u.id === selectedUserId);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
-          <Bell className="h-5 w-5" />
-          <span>Send Notification to All Users</span>
+          <UserCheck className="h-5 w-5" />
+          <span>Send Notification to Single User</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div>
+          <label className="text-sm font-medium mb-2 block">Select User</label>
+          <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Choose a user..." />
+            </SelectTrigger>
+            <SelectContent>
+              {users.map((user) => (
+                <SelectItem key={user.id} value={user.id}>
+                  <div className="flex items-center space-x-2">
+                    <span>{user.name}</span>
+                    <Badge variant="outline" className="text-xs">{user.role}</Badge>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div>
           <label className="text-sm font-medium mb-2 block">Title</label>
           <Input
@@ -142,12 +156,15 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
           </Select>
         </div>
 
-        <div className="bg-muted p-3 rounded-lg">
-          <div className="flex items-center space-x-2 text-sm">
-            <Users className="h-4 w-4" />
-            <span>Will send to all {users.length} users in the database</span>
+        {selectedUser && (
+          <div className="bg-muted p-3 rounded-lg">
+            <div className="flex items-center space-x-2 text-sm">
+              <UserCheck className="h-4 w-4" />
+              <span>Sending to: <strong>{selectedUser.name}</strong> ({selectedUser.email})</span>
+              <Badge variant="outline">{selectedUser.role}</Badge>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex items-center justify-between pt-4">
           <div className="flex items-center space-x-2">
@@ -156,11 +173,11 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
           </div>
           <Button 
             onClick={handleSendNotification}
-            disabled={isLoading || !title.trim() || !message.trim()}
+            disabled={isLoading || !title.trim() || !message.trim() || !selectedUserId}
             className="flex items-center space-x-2"
           >
             <Send className="h-4 w-4" />
-            <span>{isLoading ? 'Sending...' : 'Send to All Users'}</span>
+            <span>{isLoading ? 'Sending...' : 'Send Notification'}</span>
           </Button>
         </div>
       </CardContent>
