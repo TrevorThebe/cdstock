@@ -1,91 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/lib/supabase';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Bell } from 'lucide-react';
+import { databaseService } from '@/lib/database';
+import { storage } from '@/lib/storage';
+import { User } from '@/types';
+import { Send, Users, User as UserIcon, Bell } from 'lucide-react';
 
 interface NotificationSenderProps {
-  currentUser?: any;
+  currentUser: User;
 }
 
 export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentUser }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    message: '',
-    type: 'info' as 'info' | 'warning' | 'success' | 'error'
-  });
+  const [title, setTitle] = useState('');
+  const [message, setMessage] = useState('');
+  const [recipient, setRecipient] = useState('all');
+  const [priority, setPriority] = useState('normal');
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
+  useEffect(() => {
+    const allUsers = storage.getUsers();
+    setUsers(allUsers);
+  }, []);
 
-  const handleTypeChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      type: value as 'info' | 'warning' | 'success' | 'error'
-    }));
-  };
-
-  const sendNotificationToAll = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title.trim() || !formData.message.trim()) {
+  const handleSendNotification = async () => {
+    if (!title.trim() || !message.trim()) {
       toast({
         title: 'Error',
-        description: 'Please fill in all fields',
+        description: 'Please fill in both title and message',
         variant: 'destructive'
       });
       return;
     }
 
     setIsLoading(true);
+    let successCount = 0;
+    let totalCount = 0;
+
     try {
-      // Get all users except the sender
-      const { data: users, error: usersError } = await supabase
-        .from('user_profiles')
-        .select('user_id')
-        .neq('user_id', currentUser?.id);
+      const targetUsers = recipient === 'all' ? users : users.filter(u => u.id === recipient);
+      totalCount = targetUsers.length;
 
-      if (usersError) throw usersError;
+      for (const user of targetUsers) {
+        const notification = {
+          id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          user_id: user.id,
+          title: title.trim(),
+          message: message.trim(),
+          priority,
+          type: 'admin',
+          created_at: new Date().toISOString(),
+          sender_id: currentUser.id,
+          sender_name: currentUser.name
+        };
 
-      // Create notifications for all users
-      const notifications = users?.map(user => ({
-        user_id: user.user_id,
-        title: formData.title,
-        message: formData.message,
-        type: formData.type,
-        sender_id: currentUser?.id
-      })) || [];
-
-      const { error } = await supabase
-        .from('notifications')
-        .insert(notifications);
-
-      if (error) throw error;
+        const success = await databaseService.saveNotification(notification);
+        if (success) successCount++;
+      }
 
       toast({
-        title: 'Success',
-        description: `Notification sent to ${notifications.length} users`
+        title: 'Notifications Sent',
+        description: `Successfully sent ${successCount}/${totalCount} notifications`
       });
 
-      setFormData({
-        title: '',
-        message: '',
-        type: 'info'
-      });
-    } catch (error: any) {
+      // Reset form
+      setTitle('');
+      setMessage('');
+      setRecipient('all');
+      setPriority('normal');
+    } catch (error) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to send notifications',
+        description: 'Failed to send notifications',
         variant: 'destructive'
       });
     } finally {
@@ -93,74 +85,97 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
     }
   };
 
-  const isAdmin = currentUser?.profile?.role === 'admin' || currentUser?.profile?.role === 'super';
-
-  if (!isAdmin) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground">Only admins can send notifications to all users</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'high': return <Badge variant="destructive">High Priority</Badge>;
+      case 'medium': return <Badge variant="default">Medium Priority</Badge>;
+      default: return <Badge variant="secondary">Normal Priority</Badge>;
+    }
+  };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Send className="h-5 w-5" />
-          Send Notification to All Users
+        <CardTitle className="flex items-center space-x-2">
+          <Bell className="h-5 w-5" />
+          <span>Send Notification</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={sendNotificationToAll} className="space-y-4">
-          <div>
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              placeholder="Notification title"
-              required
-            />
-          </div>
+      <CardContent className="space-y-4">
+        <div>
+          <label className="text-sm font-medium mb-2 block">Title</label>
+          <Input
+            placeholder="Notification title..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
 
-          <div>
-            <Label htmlFor="message">Message</Label>
-            <Textarea
-              id="message"
-              name="message"
-              value={formData.message}
-              onChange={handleInputChange}
-              placeholder="Notification message"
-              rows={4}
-              required
-            />
-          </div>
+        <div>
+          <label className="text-sm font-medium mb-2 block">Message</label>
+          <Textarea
+            placeholder="Notification message..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={4}
+          />
+        </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="type">Type</Label>
-            <Select value={formData.type} onValueChange={handleTypeChange}>
+            <label className="text-sm font-medium mb-2 block">Recipient</label>
+            <Select value={recipient} onValueChange={setRecipient}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="info">Info</SelectItem>
-                <SelectItem value="success">Success</SelectItem>
-                <SelectItem value="warning">Warning</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
+                <SelectItem value="all">
+                  <div className="flex items-center space-x-2">
+                    <Users className="h-4 w-4" />
+                    <span>All Users ({users.length})</span>
+                  </div>
+                </SelectItem>
+                {users.map(user => (
+                  <SelectItem key={user.id} value={user.id}>
+                    <div className="flex items-center space-x-2">
+                      <UserIcon className="h-4 w-4" />
+                      <span>{user.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? 'Sending...' : 'Send to All Users'}
-            <Send className="ml-2 h-4 w-4" />
+          <div>
+            <label className="text-sm font-medium mb-2 block">Priority</label>
+            <Select value={priority} onValueChange={setPriority}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-muted-foreground">Priority:</span>
+            {getPriorityBadge(priority)}
+          </div>
+          <Button 
+            onClick={handleSendNotification}
+            disabled={isLoading || !title.trim() || !message.trim()}
+            className="flex items-center space-x-2"
+          >
+            <Send className="h-4 w-4" />
+            <span>{isLoading ? 'Sending...' : 'Send Notification'}</span>
           </Button>
-        </form>
+        </div>
       </CardContent>
     </Card>
   );
