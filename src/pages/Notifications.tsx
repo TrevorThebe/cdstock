@@ -101,7 +101,7 @@ export const Notifications: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Your Notifications</CardTitle>
+          <CardTitle>Your Notification(s)</CardTitle>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-96">
