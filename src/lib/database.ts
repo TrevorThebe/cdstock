@@ -58,10 +58,41 @@ export const databaseService = {
   },
 
   async getNotifications(userId: string) {
-    // Replace this with your actual database/API call
-    // Example:
-    // return fetch(`/api/notifications?userId=${userId}`).then(res => res.json());
-    return []; // placeholder, replace with real implementation
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Get admin notification history
+  async getAdminNotificationHistory(adminUserId: string) {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select(`
+        *,
+        users!user_id(name)
+      `)
+      .eq('sender_id', adminUserId)
+      .eq('type', 'admin')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data?.map(notif => ({
+      ...notif,
+      recipient_name: notif.users?.name || 'Unknown User'
+    })) || [];
+  },
+
+  async markNotificationRead(userId: string, notificationId: string) {
+    const { error } = await supabase
+      .from('read_notifications')
+      .insert({ user_id: userId, notification_id: notificationId });
+    if (error) throw error;
+    return true;
   },
 
   moveToReadNotifications: async (userId, notification) => {
