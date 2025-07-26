@@ -1,13 +1,8 @@
 import { supabase } from './supabase';
 import { storage } from './storage';
-import { createClient } from '@supabase/supabase-js';
-
-
-
 
 export const databaseService = {
-
-// Chat Messages
+  // Chat Messages
   async saveChatMessage(message: any) {
     if (!message.user_id || !message.recipient_id) {
       throw new Error('Invalid user IDs provided');
@@ -132,55 +127,60 @@ export const databaseService = {
     })) || [];
   },
 
-  async getProducts() {
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*,locations(id,location)')
-        .order('created_at', { ascending: false });
-      if (error) {
-        console.error('Supabase getProducts error:', error);
-      }
-      if (data) return data;
-    } catch (err) {
-      console.error('getProducts exception:', err);
+  // User Profiles
+  async saveUserProfile(profile: any) {
+    if (!profile.user_id || profile.user_id.trim() === '') {
+      throw new Error('Invalid user ID provided');
     }
-    return storage.getProducts();
-  },
 
-  async saveProduct(product: any) {
-    try {
-      const { error } = await supabase
-        .from('products')
-        .upsert(product);
-      if (error) throw error;
-      return true;
-    } catch {
-      const products = storage.getProducts();
-      const index = products.findIndex(p => p.id === product.id);
-      if (index >= 0) {
-        products[index] = product;
-      } else {
-        products.push(product);
-      }
-      storage.saveProducts(products);
-      return false;
-    }
+    const { error } = await supabase
+      .from('users')
+      .update({
+        name: profile.name,
+        phone: profile.phone,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', profile.user_id);
+    
+    if (error) throw error;
+    return true;
   },
 
   async getUserProfile(userId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
+    if (!userId || userId.trim() === '') {
+      throw new Error('Invalid user ID provided');
+    }
 
-      if (!error && data) return data;
-    } catch { }
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, email, name, phone, role, is_blocked, profile_picture_url, created_at, updated_at')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    if (error) throw error;
+    return data;
+  },
 
-    const users = storage.getUsers();
-    return users.find(u => u.id === userId);
+  // Products
+  async saveProduct(product: any) {
+    const { error } = await supabase
+      .from('products')
+      .upsert({
+        ...product,
+        updated_at: new Date().toISOString()
+      });
+    if (error) throw error;
+    return true;
+  },
+
+  async getProducts() {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
   },
 
   // Users - Fixed to properly query users table
@@ -199,78 +199,18 @@ export const databaseService = {
     return data || [];
   },
 
-
-/*
-  async getNotifications(userId: string) {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data || [];
-  },*/
-/*
-  // Get admin notification history
-  async getAdminNotificationHistory(adminUserId: string) {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select(`
-        *,
-        users!user_id(name)
-      `)
-      .eq('sender_id', adminUserId)
-      .eq('type', 'admin')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data?.map(notif => ({
-      ...notif,
-      recipient_name: notif.users?.name || 'Unknown User'
-    })) || [];
-  },
-
-  async markNotificationRead(userId: string, notificationId: string) {
+  async saveUser(user: any) {
     const { error } = await supabase
-      .from('read_notifications')
-      .insert({ user_id: userId, notification_id: notificationId });
+      .from('users')
+      .upsert({
+        ...user,
+        updated_at: new Date().toISOString()
+      });
     if (error) throw error;
     return true;
   },
 
-  moveToReadNotifications: async (userId, notification) => {
-    // Insert into read_notifications table
-    return supabase
-      .from('read_notifications')
-      .insert({
-        user_id: userId,
-        title: notification.title,
-        message: notification.message,
-        type: notification.type,
-        created_at: notification.created_at,
-        read_at: new Date().toISOString(),
-        sender_id: notification.sender_id
-      });
-  },
-  deleteNotification: async (userId, notificationId) => {
-    // Remove from notifications table
-    return supabase
-      .from('notifications')
-      .delete()
-      .eq('id', notificationId)
-      .eq('user_id', userId);
-  },*/
-
-  getAllUsers: async () => {
-    // Fetch all users from user_profiles table
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*');
-    if (error) throw error;
-    return data || [];
-  },
-// Stats tracking
+  // Stats tracking
   async recordUserLogin(userId: string) {
     if (!userId) return;
     try {
@@ -288,6 +228,7 @@ export const databaseService = {
       console.error('Stats table may not exist:', err);
     }
   },
+
   async recordProductChange(userId: string, productId: string, action: string) {
     if (!userId || !productId) return;
     try {
@@ -304,30 +245,4 @@ export const databaseService = {
       console.error('Stats table may not exist:', err);
     }
   }
-
-
-  createUser: async (user: any) => {
-    // Insert into users table
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .insert(user)
-      .select()
-      .single();
-    if (userError) throw userError;
-
-    // Insert into user_profiles table
-    const profile = {
-      user_id: userData.id || user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role || 'user',
-      // add other profile fields as needed
-    };
-    const { error: profileError } = await supabase
-      .from('user_profiles')
-      .insert(profile);
-    if (profileError) throw profileError;
-
-    return userData;
-  },
 };
