@@ -29,9 +29,15 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
   const loadUsers = async () => {
     try {
       const allUsers = await databaseService.getUsers();
+      console.log('Loaded users:', allUsers);
       setUsers(allUsers);
     } catch (error) {
       console.error('Failed to load users:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load users',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -45,15 +51,23 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
       return;
     }
 
+    if (users.length === 0) {
+      toast({
+        title: 'Error',
+        description: 'No users found to send notifications to',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setIsLoading(true);
     let successCount = 0;
     const totalCount = users.length;
 
     try {
-      // Send to all users in the database
       for (const user of users) {
         const notification = {
-          id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: crypto.randomUUID(),
           user_id: user.id,
           title: title.trim(),
           message: message.trim(),
@@ -61,7 +75,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
           type: 'admin',
           created_at: new Date().toISOString(),
           sender_id: currentUser.id,
-          sender_name: currentUser.name
+          sender_name: currentUser.name || currentUser.email
         };
 
         try {
@@ -77,7 +91,6 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
         description: `Successfully sent ${successCount}/${totalCount} notifications to all users`
       });
 
-      // Reset form
       setTitle('');
       setMessage('');
       setPriority('normal');
@@ -145,7 +158,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
         <div className="bg-muted p-3 rounded-lg">
           <div className="flex items-center space-x-2 text-sm">
             <Users className="h-4 w-4" />
-            <span>Will send to all {users.length} users in the database</span>
+            <span>Will send to {users.length} users in the database</span>
           </div>
         </div>
 
@@ -156,7 +169,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
           </div>
           <Button 
             onClick={handleSendNotification}
-            disabled={isLoading || !title.trim() || !message.trim()}
+            disabled={isLoading || !title.trim() || !message.trim() || users.length === 0}
             className="flex items-center space-x-2"
           >
             <Send className="h-4 w-4" />

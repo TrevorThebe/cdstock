@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { databaseService } from '@/lib/database';
+import { supabase } from '@/lib/supabase';
 import { User } from '@/types';
 import { History, Clock, User as UserIcon } from 'lucide-react';
 
@@ -18,6 +18,7 @@ interface NotificationRecord {
   created_at: string;
   recipient_name?: string;
   user_id: string;
+  users?: { name: string; email: string; };
 }
 
 export const NotificationHistory: React.FC<NotificationHistoryProps> = ({ currentUser }) => {
@@ -30,8 +31,24 @@ export const NotificationHistory: React.FC<NotificationHistoryProps> = ({ curren
 
   const loadNotificationHistory = async () => {
     try {
-      const history = await databaseService.getAdminNotificationHistory(currentUser.id);
-      setNotifications(history);
+      const { data, error } = await supabase
+        .from('notifications')
+        .select(`
+          id, title, message, priority, created_at, user_id,
+          users!user_id(name, email)
+        `)
+        .eq('sender_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      const processedData = data?.map(notif => ({
+        ...notif,
+        recipient_name: notif.users?.name || notif.users?.email || 'Unknown User'
+      })) || [];
+      
+      console.log('Loaded notification history:', processedData);
+      setNotifications(processedData);
     } catch (error) {
       console.error('Failed to load notification history:', error);
     } finally {
@@ -57,7 +74,7 @@ export const NotificationHistory: React.FC<NotificationHistoryProps> = ({ curren
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <History className="h-5 w-5" />
-            <span>Notification History</span>
+            <span>My Notification History</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -74,7 +91,7 @@ export const NotificationHistory: React.FC<NotificationHistoryProps> = ({ curren
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <History className="h-5 w-5" />
-          <span>Notification History ({notifications.length})</span>
+          <span>My Notification History ({notifications.length})</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -91,14 +108,14 @@ export const NotificationHistory: React.FC<NotificationHistoryProps> = ({ curren
                   <div className="flex items-start justify-between">
                     <h4 className="font-medium text-sm">{notification.title}</h4>
                     <div className="flex items-center space-x-2">
-                      {getPriorityBadge(notification.priority)}
+                      {getPriorityBadge(notification.priority || 'normal')}
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">{notification.message}</p>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <div className="flex items-center space-x-1">
                       <UserIcon className="h-3 w-3" />
-                      <span>{notification.recipient_name || 'Unknown User'}</span>
+                      <span>{notification.recipient_name}</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Clock className="h-3 w-3" />

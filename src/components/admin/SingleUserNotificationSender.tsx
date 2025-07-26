@@ -30,9 +30,15 @@ export const SingleUserNotificationSender: React.FC<SingleUserNotificationSender
   const loadUsers = async () => {
     try {
       const allUsers = await databaseService.getUsers();
+      console.log('Loaded users for single sender:', allUsers);
       setUsers(allUsers);
     } catch (error) {
       console.error('Failed to load users:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load users',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -51,7 +57,7 @@ export const SingleUserNotificationSender: React.FC<SingleUserNotificationSender
     try {
       const selectedUser = users.find(u => u.id === selectedUserId);
       const notification = {
-        id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: crypto.randomUUID(),
         user_id: selectedUserId,
         title: title.trim(),
         message: message.trim(),
@@ -59,7 +65,7 @@ export const SingleUserNotificationSender: React.FC<SingleUserNotificationSender
         type: 'admin',
         created_at: new Date().toISOString(),
         sender_id: currentUser.id,
-        sender_name: currentUser.name
+        sender_name: currentUser.name || currentUser.email
       };
 
       await databaseService.saveNotification(notification);
@@ -69,12 +75,12 @@ export const SingleUserNotificationSender: React.FC<SingleUserNotificationSender
         description: `Successfully sent notification to ${selectedUser?.name || 'selected user'}`
       });
 
-      // Reset form
       setTitle('');
       setMessage('');
       setPriority('normal');
       setSelectedUserId('');
     } catch (error) {
+      console.error('Failed to send notification:', error);
       toast({
         title: 'Error',
         description: 'Failed to send notification',
@@ -105,17 +111,17 @@ export const SingleUserNotificationSender: React.FC<SingleUserNotificationSender
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <label className="text-sm font-medium mb-2 block">Select User</label>
+          <label className="text-sm font-medium mb-2 block">Select User ({users.length} available)</label>
           <Select value={selectedUserId} onValueChange={setSelectedUserId}>
             <SelectTrigger>
-              <SelectValue placeholder="Choose a user..." />
+              <SelectValue placeholder={users.length > 0 ? "Choose a user..." : "No users available"} />
             </SelectTrigger>
             <SelectContent>
               {users.map((user) => (
                 <SelectItem key={user.id} value={user.id}>
                   <div className="flex items-center space-x-2">
-                    <span>{user.name}</span>
-                    <Badge variant="outline" className="text-xs">{user.role}</Badge>
+                    <span>{user.name || user.email}</span>
+                    <Badge variant="outline" className="text-xs">{user.role || 'user'}</Badge>
                   </div>
                 </SelectItem>
               ))}
@@ -160,8 +166,8 @@ export const SingleUserNotificationSender: React.FC<SingleUserNotificationSender
           <div className="bg-muted p-3 rounded-lg">
             <div className="flex items-center space-x-2 text-sm">
               <UserCheck className="h-4 w-4" />
-              <span>Sending to: <strong>{selectedUser.name}</strong> ({selectedUser.email})</span>
-              <Badge variant="outline">{selectedUser.role}</Badge>
+              <span>Sending to: <strong>{selectedUser.name || selectedUser.email}</strong></span>
+              <Badge variant="outline">{selectedUser.role || 'user'}</Badge>
             </div>
           </div>
         )}
@@ -173,7 +179,7 @@ export const SingleUserNotificationSender: React.FC<SingleUserNotificationSender
           </div>
           <Button 
             onClick={handleSendNotification}
-            disabled={isLoading || !title.trim() || !message.trim() || !selectedUserId}
+            disabled={isLoading || !title.trim() || !message.trim() || !selectedUserId || users.length === 0}
             className="flex items-center space-x-2"
           >
             <Send className="h-4 w-4" />
