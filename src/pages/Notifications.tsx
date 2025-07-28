@@ -42,18 +42,6 @@ export const Notifications: React.FC = () => {
     }
   };
 
-  export const getNotifications = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('notifications')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data;
-  };
-
-  /*
   const loadNotifications = async () => {
     try {
       const notifs = await databaseService.getNotifications(currentUser.id);
@@ -63,7 +51,12 @@ export const Notifications: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };*/
+  };
+  useEffect(() => {
+    if (currentUser) {
+      loadNotifications();
+    }
+  }, [currentUser]);
 
   const markAsRead = async (notificationId: string) => {
     try {
