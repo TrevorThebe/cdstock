@@ -24,7 +24,7 @@ export const databaseService = {
 
   async getChatMessages(userId: string, recipientId: string) {
     if (!userId || !recipientId) return [];
-    
+
     const { data, error } = await supabase
       .from('chat_messages')
       .select(`
@@ -66,7 +66,7 @@ export const databaseService = {
 
   async getNotifications(userId: string) {
     if (!userId || userId.trim() === '') return [];
-    
+
     const { data: notifications, error } = await supabase
       .from('notifications')
       .select('*')
@@ -74,30 +74,30 @@ export const databaseService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    
+
     // Get read status for each notification
     const { data: readNotifs } = await supabase
       .from('read_notifications')
       .select('notification_id')
       .eq('user_id', userId);
-    
+
     const readIds = new Set(readNotifs?.map(r => r.notification_id) || []);
-    
+
     return notifications?.map(notif => ({
       ...notif,
       is_read: readIds.has(notif.id)
-    })) || [];   
+    })) || [];
   },
 
   async markNotificationRead(userId: string, notificationId: string) {
     if (!userId || !notificationId) {
       throw new Error('Invalid parameters');
     }
-    
+
     const { error } = await supabase
       .from('read_notifications')
-      .upsert({ 
-        user_id: userId, 
+      .upsert({
+        user_id: userId,
         notification_id: notificationId,
         read_at: new Date().toISOString()
       }, {
@@ -110,7 +110,7 @@ export const databaseService = {
   // Admin notification history
   async getAdminNotificationHistory(adminId: string) {
     if (!adminId || adminId.trim() === '') return [];
-    
+
     const { data, error } = await supabase
       .from('notifications')
       .select(`
@@ -141,7 +141,7 @@ export const databaseService = {
         updated_at: new Date().toISOString()
       })
       .eq('id', profile.user_id);
-    
+
     if (error) throw error;
     return true;
   },
@@ -156,7 +156,7 @@ export const databaseService = {
       .select('id, email, name, phone, role, is_blocked, profile_picture_url, created_at, updated_at')
       .eq('id', userId)
       .maybeSingle();
-    
+
     if (error) throw error;
     return data;
   },
@@ -178,7 +178,7 @@ export const databaseService = {
       .from('products')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data || [];
   },
@@ -191,7 +191,7 @@ export const databaseService = {
       .not('id', 'is', null)
       .not('email', 'is', null)
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       console.error('Error fetching users:', error);
       return [];
