@@ -86,7 +86,7 @@ export const databaseService = {
     return notifications?.map(notif => ({
       ...notif,
       is_read: readIds.has(notif.id)
-    })) || [];
+    })) || [];   
   },
 
   async markNotificationRead(userId: string, notificationId: string) {
