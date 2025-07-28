@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bell, Check, Trash2 } from 'lucide-react';
+import { Bell, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/lib/auth';
 import { databaseService } from '@/lib/database';
 import { NotificationSender } from '@/components/notifications/NotificationSender';
+import { supabase } from '@/lib/supabaseClient';
 
 interface Notification {
   id: string;
@@ -31,14 +32,23 @@ export const Notifications: React.FC = () => {
   useEffect(() => {
     if (currentUser) {
       loadNotifications();
+      subscribeToRealtime(currentUser.id);
     }
+
+    return () => {
+      supabase.removeAllChannels();
+    };
   }, [currentUser]);
 
   const getCurrentUser = async () => {
-    const user = authService.getCurrentUser();
-    if (user) {
-      const profile = await databaseService.getUserProfile(user.id);
-      setCurrentUser({ ...user, profile });
+    try {
+      const user = authService.getCurrentUser();
+      if (user) {
+        const profile = await databaseService.getUserProfile(user.id);
+        setCurrentUser({ ...user, profile });
+      }
+    } catch (error) {
+      console.error('Failed to get current user:', error);
     }
   };
 
@@ -53,6 +63,24 @@ export const Notifications: React.FC = () => {
     }
   };
 
+  const subscribeToRealtime = (userId: string) => {
+    supabase
+      .channel('notifications-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          loadNotifications();
+        }
+      )
+      .subscribe();
+  };
+
   const markAsRead = async (notificationId: string) => {
     try {
       await databaseService.markNotificationRead(currentUser.id, notificationId);
@@ -61,17 +89,21 @@ export const Notifications: React.FC = () => {
       toast({
         title: 'Error',
         description: 'Failed to mark notification as read',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'success': return 'bg-green-100 text-green-800';
-      case 'warning': return 'bg-yellow-100 text-yellow-800';
-      case 'error': return 'bg-red-100 text-red-800';
-      default: return 'bg-blue-100 text-blue-800';
+      case 'success':
+        return 'bg-green-100 text-green-800';
+      case 'warning':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'error':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-blue-100 text-blue-800';
     }
   };
 
@@ -95,9 +127,7 @@ export const Notifications: React.FC = () => {
         <h1 className="text-xl lg:text-3xl font-bold">Notifications</h1>
       </div>
 
-      {isAdmin && (
-        <NotificationSender currentUser={currentUser} />
-      )}
+      {isAdmin && <NotificationSender currentUser={currentUser} />}
 
       <Card>
         <CardHeader>
@@ -120,9 +150,7 @@ export const Notifications: React.FC = () => {
                         <Badge className={getTypeColor(notification.type)}>
                           {notification.type}
                         </Badge>
-                        {!notification.is_read && (
-                          <Badge variant="secondary">New</Badge>
-                        )}
+                        {!notification.is_read && <Badge variant="secondary">New</Badge>}
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">
                         {notification.message}
