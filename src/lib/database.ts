@@ -1,19 +1,6 @@
 import { supabase } from './supabase';
 import { storage } from './storage';
 
-
-interface User {
-  id: string;
-  email: string;
-  name?: string | null;
-  phone?: string | null;
-  role: string;
-  is_blocked: boolean;
-  profile_picture_url?: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 interface Notification {
   id: string;
   user_id: string;
@@ -24,12 +11,28 @@ interface Notification {
   created_at: string;
   sender_id?: string;
   sender_name?: string;
-  is_read?: boolean;
+}
+
+interface ReadNotification {
+  user_id: string;
+  notification_id: string;
+  read_at: string;
 }
 
 export const databaseService = {
-  // USER METHODS
-  async getUsers(): Promise<User[]> {
+
+  // Add this new method
+  async getUsers(): Promise<Array<{
+    id: string;
+    email: string;
+    name: string | null;
+    phone: string | null;
+    role: string;
+    is_blocked: boolean;
+    profile_picture_url: string | null;
+    created_at: string;
+    updated_at: string;
+  }>> {
     const { data, error } = await supabase
       .from('users')
       .select(`
@@ -46,73 +49,73 @@ export const databaseService = {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching users:', error);
-      throw new Error(error.message);
+      console.error('Supabase getUsers error:', error);
+      throw error;
     }
+
+    return data || [];
+  },
+  // NOTIFICATION METHODS
+  async saveNotification(notification: Omit<Notification, 'id' | 'created_at'> & { id?: string }) {
+    const { error } = await supabase
+      .from('notifications')
+      .insert({
+        id: notification.id || crypto.randomUUID(),
+        ...notification,
+        created_at: new Date().toISOString()
+      });
+
+    if (error) throw new Error(`Notification save failed: ${error.message}`);
+    return true;
+  },
+
+  async getNotifications(userId: string, limit = 50): Promise<(Notification & { is_read: boolean })[]> {
+    const { data, error } = await supabase.rpc('get_user_notifications', {
+      user_id: userId,
+      max_results: limit
+    });
+
+    if (error) throw new Error(`Notifications fetch failed: ${error.message}`);
     return data || [];
   },
 
-  async getUserProfile(userId: string): Promise<User | null> {
-    const { data, error } = await supabase
-      .from('users')
-      .select(`
-        id,
-        email,
-        name,
-        phone,
-        role,
-        is_blocked,
-        profile_picture_url,
-        created_at,
-        updated_at
-      `)
-      .eq('id', userId)
-      .single();
+  async markNotificationRead(userId: string, notificationId: string) {
+    const { error } = await supabase.rpc('mark_notification_read', {
+      user_id: userId,
+      notification_id: notificationId
+    });
 
-    if (error) {
-      console.error('Error fetching user profile:', error);
-      return null;
-    }
-    return data;
+    if (error) throw new Error(`Mark read failed: ${error.message}`);
+    return true;
   },
 
-  // NOTIFICATION METHODS
-  async getNotifications(userId: string): Promise<Notification[]> {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select(`
-        *,
-        read_notifications!inner(read_at)
-      `)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+  async markAllNotificationsRead(userId: string) {
+    const { error } = await supabase.rpc('mark_all_notifications_read', {
+      user_id: userId
+    });
 
-    if (error) {
-      console.error('Error fetching notifications:', error);
-      throw new Error(error.message);
-    }
-
-    return data.map(notif => ({
-      ...notif,
-      is_read: !!notif.read_notifications?.read_at
-    })) || [];
+    if (error) throw new Error(`Mark all read failed: ${error.message}`);
+    return true;
   },
 
-  async markNotificationRead(userId: string, notificationId: string): Promise<void> {
-    const { error } = await supabase
+  async deleteNotification(userId: string, notificationId: string) {
+    await supabase
       .from('read_notifications')
-      .upsert({
-        user_id: userId,
-        notification_id: notificationId,
-        read_at: new Date().toISOString()
-      });
+      .delete()
+      .match({ user_id: userId, notification_id: notificationId });
 
-    if (error) throw new Error(error.message);
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .match({ id: notificationId, user_id: userId });
+
+    if (error) throw new Error(`Delete failed: ${error.message}`);
+    return true;
   },
 
   // REALTIME SUBSCRIPTIONS
   subscribeToNotifications(userId: string, callback: (payload: Notification) => void) {
-    const channel = supabase.channel('notifications')
+    const channel = supabase.channel('notifications_' + userId)
       .on(
         'postgres_changes',
         {
@@ -128,5 +131,19 @@ export const databaseService = {
     return () => {
       supabase.removeChannel(channel);
     };
-  }
+  },
+
+  // USER PROFILE METHODS (kept from your original)
+  async getUserProfile(userId: string) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, email, name, phone, role, is_blocked, profile_picture_url, created_at, updated_at')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // ... include other existing methods you need ...
 };
