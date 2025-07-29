@@ -29,7 +29,7 @@ export const Notifications: React.FC = () => {
   // Memoized function to load notifications
   const loadNotifications = useCallback(async () => {
     try {
-      if (!currentUser?.id) return;
+      if (!currentUser?.user_id) return;
       
       setRefreshing(true);
       const notifs = await databaseService.getNotifications(currentUser.id);
@@ -53,7 +53,7 @@ export const Notifications: React.FC = () => {
       try {
         const user = authService.getCurrentUser();
         if (user) {
-          const profile = await databaseService.getUserProfile(user.id);
+          const profile = await databaseService.getUserProfile(user.user_id);
           setCurrentUser({ ...user, profile });
         }
       } catch (error) {
