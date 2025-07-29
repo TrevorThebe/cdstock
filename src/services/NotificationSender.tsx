@@ -59,7 +59,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
 
       // Create notifications for all users
       const notifications = users?.map(user => ({
-        user_id: user.auth_user_id,
+        user_id: user.user_id,
         title: formData.title,
         message: formData.message,
         type: formData.type,
