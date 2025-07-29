@@ -52,8 +52,8 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
       // Get all users except the sender
       const { data: users, error: usersError } = await supabase
         .from('user_profiles')
-        .select('auth_user_id')
-        .neq('auth_user_id', currentUser?.id);
+        .select('user_id')
+        .neq('user_id', currentUser?.id);
 
       if (usersError) throw usersError;
 
