@@ -17,7 +17,7 @@ export const Notifications = () => {
     const fetchUser = async () => {
       try {
         // Replace with your actual auth logic
-        const userId = 'current-user-id'; // Get from your auth service
+        const userId = 'user_id'; // Get from your auth service
         const user = await databaseService.getUserProfile(userId);
         setCurrentUser(user);
       } catch (error) {
@@ -68,7 +68,7 @@ export const Notifications = () => {
 
   const markAsRead = async (id: string) => {
     try {
-      await databaseService.markNotificationRead(currentUser!.id, id);
+      await databaseService.markNotificationRead(currentUser!.use_id, id);
       setNotifications(prev => 
         prev.map(n => n.id === id ? { ...n, is_read: true } : n)
       );
