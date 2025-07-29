@@ -29,8 +29,16 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
   const loadUsers = async () => {
     try {
       const allUsers = await databaseService.getUsers();
-      console.log('Loaded users:', allUsers);
-      setUsers(allUsers);
+      // Filter out users without valid IDs and ensure they exist in the database
+      const validUsers = allUsers.filter(user => 
+        user && 
+        user.id && 
+        user.id.trim() !== '' && 
+        user.email &&
+        user.email.trim() !== ''
+      );
+      console.log('Loaded valid users:', validUsers);
+      setUsers(validUsers);
     } catch (error) {
       console.error('Failed to load users:', error);
       toast({
@@ -54,7 +62,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
     if (users.length === 0) {
       toast({
         title: 'Error',
-        description: 'No users found to send notifications to',
+        description: 'No valid users found to send notifications to',
         variant: 'destructive'
       });
       return;
@@ -66,6 +74,11 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
 
     try {
       for (const user of users) {
+        if (!user.id || user.id.trim() === '') {
+          console.warn('Skipping user with invalid ID:', user);
+          continue;
+        }
+
         const notification = {
           id: crypto.randomUUID(),
           user_id: user.id,
@@ -81,20 +94,29 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
         try {
           await databaseService.saveNotification(notification);
           successCount++;
+          console.log(`Successfully sent notification to user ${user.id}`);
         } catch (error) {
           console.error(`Failed to send notification to user ${user.id}:`, error);
         }
       }
 
-      toast({
-        title: 'Notifications Sent',
-        description: `Successfully sent ${successCount}/${totalCount} notifications to all users`
-      });
-
-      setTitle('');
-      setMessage('');
-      setPriority('normal');
+      if (successCount > 0) {
+        toast({
+          title: 'Notifications Sent',
+          description: `Successfully sent ${successCount}/${totalCount} notifications to all users`
+        });
+        setTitle('');
+        setMessage('');
+        setPriority('normal');
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to send any notifications. Please check the logs.',
+          variant: 'destructive'
+        });
+      }
     } catch (error) {
+      console.error('Error sending notifications:', error);
       toast({
         title: 'Error',
         description: 'Failed to send notifications',
@@ -158,7 +180,7 @@ export const NotificationSender: React.FC<NotificationSenderProps> = ({ currentU
         <div className="bg-muted p-3 rounded-lg">
           <div className="flex items-center space-x-2 text-sm">
             <Users className="h-4 w-4" />
-            <span>Will send to {users.length} users in the database</span>
+            <span>Will send to {users.length} valid users in the database</span>
           </div>
         </div>
 
