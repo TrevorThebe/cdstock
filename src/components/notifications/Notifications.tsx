@@ -68,7 +68,7 @@ export const Notifications = () => {
 
   const markAsRead = async (id: string) => {
     try {
-      await databaseService.markNotificationRead(currentUser!.use_id, id);
+      await databaseService.markNotificationRead(currentUser!.id, id);
       setNotifications(prev => 
         prev.map(n => n.id === id ? { ...n, is_read: true } : n)
       );
