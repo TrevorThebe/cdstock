@@ -30,8 +30,16 @@ export const SingleUserNotificationSender: React.FC<SingleUserNotificationSender
   const loadUsers = async () => {
     try {
       const allUsers = await databaseService.getUsers();
-      console.log('Loaded users for single sender:', allUsers);
-      setUsers(allUsers);
+      // Filter out users without valid IDs and ensure they exist in the database
+      const validUsers = allUsers.filter(user => 
+        user && 
+        user.id && 
+        user.id.trim() !== '' && 
+        user.email &&
+        user.email.trim() !== ''
+      );
+      console.log('Loaded valid users for single sender:', validUsers);
+      setUsers(validUsers);
     } catch (error) {
       console.error('Failed to load users:', error);
       toast({
@@ -52,10 +60,20 @@ export const SingleUserNotificationSender: React.FC<SingleUserNotificationSender
       return;
     }
 
+    // Validate that the selected user still exists in our list
+    const selectedUser = users.find(u => u.id === selectedUserId);
+    if (!selectedUser) {
+      toast({
+        title: 'Error',
+        description: 'Selected user is no longer valid. Please refresh and try again.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const selectedUser = users.find(u => u.id === selectedUserId);
       const notification = {
         id: crypto.randomUUID(),
         user_id: selectedUserId,
@@ -68,11 +86,12 @@ export const SingleUserNotificationSender: React.FC<SingleUserNotificationSender
         sender_name: currentUser.name || currentUser.email
       };
 
+      console.log('Sending notification to user:', selectedUserId, notification);
       await databaseService.saveNotification(notification);
 
       toast({
         title: 'Notification Sent',
-        description: `Successfully sent notification to ${selectedUser?.name || 'selected user'}`
+        description: `Successfully sent notification to ${selectedUser.name || selectedUser.email}`
       });
 
       setTitle('');
@@ -82,8 +101,8 @@ export const SingleUserNotificationSender: React.FC<SingleUserNotificationSender
     } catch (error) {
       console.error('Failed to send notification:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to send notification',
+        title: 'Failed to send notification',
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
         variant: 'destructive'
       });
     } finally {
