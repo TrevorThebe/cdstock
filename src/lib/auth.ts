@@ -1,15 +1,55 @@
 import { supabase } from './supabase';
 import { storage } from './storage';
 import { User } from '@/types';
+import { supabase } from './client';
 
 export const authService = {
+
+  async signIn(email: string, password: string) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+
+    // Record additional login stats
+    await supabase
+      .from('user_login_stats')
+      .insert({
+        user_id: data.user.id,
+        ip_address: '', // Get from request headers in Edge Function
+        user_agent: navigator.userAgent,
+        device_info: {
+          platform: navigator.platform,
+          screen: {
+            width: window.screen.width,
+            height: window.screen.height
+          }
+        }
+      });
+
+    return data;
+  },
+
+  async getProfile(userId: string) {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
   async login(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
     if (error) throw error;
-
+    
     if (data.user) {
       // Get user from users table
       const { data: userRecord, error: userError } = await supabase
@@ -17,9 +57,9 @@ export const authService = {
         .select('*')
         .eq('email', data.user.email)
         .single();
-
+      
       if (userError) throw userError;
-
+      
       const user: User = {
         id: data.user.id,
         email: data.user.email || '',
@@ -27,8 +67,8 @@ export const authService = {
         phone: userRecord?.phone || '',
         role: userRecord?.role || 'normal',
         isBlocked: userRecord?.is_blocked || false,
-        createdAt: data.user.created_at,
-        updatedAt: new Date().toISOString()
+        createdAt: userRecord?.created_at || data.user.created_at || new Date().toISOString(),
+        updatedAt: userRecord?.updated_at || new Date().toISOString()
       };
       storage.setCurrentUser(user);
       return user;
@@ -47,7 +87,7 @@ export const authService = {
       }
     });
     if (error) throw error;
-
+    
     if (data.user) {
       // Insert into users table
       const { error: insertError } = await supabase.from('users').insert({
@@ -58,9 +98,9 @@ export const authService = {
         role: 'normal',
         is_blocked: false
       });
-
+      
       if (insertError) throw insertError;
-
+      
       const user: User = {
         id: data.user.id,
         email: data.user.email || '',
@@ -68,7 +108,7 @@ export const authService = {
         phone: phone || '',
         role: 'normal',
         isBlocked: false,
-        createdAt: data.user.created_at,
+        createdAt: data.user.created_at || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
       storage.setCurrentUser(user);
@@ -92,9 +132,9 @@ export const authService = {
       .select('*')
       .eq('id', userId)
       .single();
-
+    
     if (error) throw error;
-
+    
     const user: User = {
       id: data.id,
       email: data.email,
@@ -102,10 +142,10 @@ export const authService = {
       phone: data.phone || '',
       role: data.role,
       isBlocked: data.is_blocked,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
+      createdAt: data.created_at || new Date().toISOString(),
+      updatedAt: data.updated_at || new Date().toISOString()
     };
-
+    
     storage.setCurrentUser(user);
     return user;
   }
