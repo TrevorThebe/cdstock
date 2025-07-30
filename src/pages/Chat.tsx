@@ -1,132 +1,138 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, MessageCircle, Users } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { ChatMessage } from '@/components/chat/ChatMessage';
-import { UserDropdown } from '@/components/chat/UserDropdown';
-import { authService } from '@/lib/auth';
-import { databaseService } from '@/lib/database';
-
-interface ChatMessageType {
-  id: string;
-  user_id: string;
-  recipient_id?: string;
-  message: string;
-  created_at: string;
-  user_name?: string;
-  user_avatar?: string;
-  is_admin?: boolean;
-}
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/lib/supabase';
+import { useAppContext } from '@/contexts/AppContext';
+import { Send } from 'lucide-react';
 
 export const Chat: React.FC = () => {
-  const [messages, setMessages] = useState<ChatMessageType[]>([]);
+  const { currentUser } = useAppContext();
+  const [users, setUsers] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string>('');
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    getCurrentUser();
-  }, []);
-
-  useEffect(() => {
-    if (currentUser && selectedUserId) {
-      loadMessages();
-      // Set up real-time subscription
-      const subscription = setupRealtimeSubscription();
-      return () => {
-        subscription?.unsubscribe();
-      };
-    }
-  }, [currentUser, selectedUserId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const getCurrentUser = async () => {
-    const user = authService.getCurrentUser();
-    if (user) {
-      const profile = await databaseService.getUserProfile(user.id);
-      setCurrentUser({ ...user, profile });
-    }
-  };
-
-  const setupRealtimeSubscription = () => {
-    if (!currentUser || !selectedUserId) return;
-
-    const { supabase } = require('@/lib/supabase');
-    return supabase
-      .channel('chat_messages')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'chat_messages',
-        filter: `or(and(user_id.eq.${currentUser.id},recipient_id.eq.${selectedUserId}),and(user_id.eq.${selectedUserId},recipient_id.eq.${currentUser.id}))`
-      }, () => {
-        loadMessages();
-      })
-      .subscribe();
-  };
-
-  const loadMessages = async () => {
-    if (!currentUser || !selectedUserId) return;
-
+  // Load available users
+  const loadUsers = async () => {
     try {
-      const msgs = await databaseService.getChatMessages(currentUser.id, selectedUserId);
-      setMessages(msgs);
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, email')
+        .neq('id', currentUser?.id || '');
+      
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      setError('Failed to load users');
+    }
+  };
+
+  // Load messages for selected user
+  const loadMessages = async () => {
+    if (!currentUser?.id || !selectedUser) return;
+    
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .or(
+          `and(user_id.eq.${currentUser.id},recipient_id.eq.${selectedUser}),` +
+          `and(user_id.eq.${selectedUser},recipient_id.eq.${currentUser.id})`
+        )
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      setMessages(data || []);
     } catch (error) {
       console.error('Error loading messages:', error);
+      setError('Failed to load messages');
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Send new message with recipient validation
   const sendMessage = async () => {
-    if (!newMessage.trim() || !currentUser || !selectedUserId) return;
-
-    setLoading(true);
+    if (!newMessage.trim() || !selectedUser || !currentUser?.id) return;
+    
     try {
-      const messageData = {
-        user_id: currentUser.id,
-        recipient_id: selectedUserId,
-        message: newMessage.trim()
-      };
+      setError(null);
+      
+      // 1. Verify recipient exists in database
+      const { count, error: recipientError } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('id', selectedUser);
 
-      await databaseService.saveChatMessage(messageData);
+      if (recipientError || count === 0) {
+        throw new Error('Recipient user does not exist');
+      }
 
-      // Send notification to recipient
-      const notificationData = {
-        user_id: selectedUserId,
-        title: `New message from ${currentUser.profile?.name || currentUser.email}`,
-        message: newMessage.trim(),
-        type: 'message',
-        priority: 'medium'
-      };
-      await databaseService.saveNotification(notificationData);
+      // 2. Send the message
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          user_id: currentUser.id,
+          recipient_id: selectedUser,
+          message: newMessage.trim()
+        });
 
+      if (error) throw error;
+      
       setNewMessage('');
-      toast({
-        title: 'Message sent',
-        description: 'Your message has been delivered'
-      });
     } catch (error) {
       console.error('Error sending message:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to send message',
-        variant: 'destructive'
-      });
+      setError(error instanceof Error ? error.message : 'Failed to send message');
+      
+      // Refresh users list if recipient was invalid
+      if (error instanceof Error && error.message.includes('Recipient')) {
+        loadUsers();
+      }
     }
-    setLoading(false);
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!selectedUser || !currentUser?.id) return;
+
+    const channel = supabase
+      .channel('chat_updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `or(and(user_id.eq.${currentUser.id},recipient_id.eq.${selectedUser}),and(user_id.eq.${selectedUser},recipient_id.eq.${currentUser.id})`
+        },
+        (payload) => {
+          setMessages(prev => [...prev, payload.new]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedUser, currentUser?.id]);
+
+  // Initial data loading
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  // Load messages when user changes
+  useEffect(() => {
+    if (selectedUser) {
+      loadMessages();
+    }
+  }, [selectedUser]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -136,72 +142,92 @@ export const Chat: React.FC = () => {
   };
 
   return (
-    <div className="p-4 lg:p-6 h-[calc(100vh-4rem)] lg:h-screen flex flex-col">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div className="flex items-center space-x-3">
-          <MessageCircle className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600" />
-          <h1 className="text-xl lg:text-3xl font-bold">Chat</h1>
-        </div>
-
-        <UserDropdown
-          onUserSelect={setSelectedUserId}
-          selectedUserId={selectedUserId}
-          currentUser={currentUser}
-        />
+    <div className="p-6 h-full flex flex-col">
+      <h1 className="text-3xl font-bold mb-6">Chat</h1>
+      
+      <div className="mb-4">
+        <Select 
+          value={selectedUser} 
+          onValueChange={(value) => {
+            setSelectedUser(value);
+            setError(null);
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a user to chat with" />
+          </SelectTrigger>
+          <SelectContent>
+            {users.map(user => (
+              <SelectItem key={user.id} value={user.id}>
+                {user.name || user.email}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <Card className="flex-1 flex flex-col min-h-0">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base lg:text-lg">
-            {selectedUserId ? 'Chat Conversation' : 'Select a user to start chatting'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col p-0 min-h-0">
-          <ScrollArea className="flex-1 p-3 lg:p-4">
-            <div className="space-y-3 lg:space-y-4">
-              {messages.map((message) => (
-                <ChatMessage
-                  key={message.id}
-                  message={message}
-                  currentUserId={currentUser?.id}
-                  isAdmin={message.is_admin}
-                />
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+          {error}
+        </div>
+      )}
 
-          {selectedUserId && (
-            <div className="p-3 lg:p-4 border-t bg-gray-50">
-              <div className="flex space-x-2">
-                <Input
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Type your message..."
-                  disabled={loading}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={sendMessage}
-                  disabled={loading || !newMessage.trim()}
-                  size="sm"
-                  className="px-3"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {!selectedUserId && (
-            <div className="p-4 text-center text-muted-foreground">
-              <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Select a user from the dropdown above to start chatting</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {selectedUser ? (
+        <div className="flex-1 flex flex-col">
+          <Card className="flex-1 mb-4">
+            <CardHeader>
+              <CardTitle>Messages</CardTitle>
+            </CardHeader>
+            <CardContent className="h-96 overflow-y-auto">
+              {loading ? (
+                <div className="flex justify-center items-center h-full">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="flex justify-center items-center h-full text-gray-500">
+                  No messages yet
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {messages.map((message) => (
+                    <div 
+                      key={message.id} 
+                      className={`flex ${message.user_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                        message.user_id === currentUser?.id 
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-gray-200 text-gray-800'
+                      }`}>
+                        <p className="text-sm">{message.message}</p>
+                        <p className="text-xs opacity-75 mt-1">
+                          {new Date(message.created_at).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          <div className="flex space-x-2">
+            <Input
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type your message..."
+              onKeyPress={handleKeyPress}
+            />
+            <Button onClick={sendMessage} disabled={!newMessage.trim()}>
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          Select a user to start chatting
+        </div>
+      )}
     </div>
   );
 };
