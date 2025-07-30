@@ -7,11 +7,26 @@ import { supabase } from '@/lib/supabase';
 import { useAppContext } from '@/contexts/AppContext';
 import { Send } from 'lucide-react';
 
+interface Message {
+  id: string;
+  user_id: string;
+  recipient_id: string;
+  message: string;
+  created_at: string;
+  status?: 'sending' | 'delivered' | 'failed';
+}
+
+interface User {
+  id: string;
+  name?: string;
+  email?: string;
+}
+
 export const Chat: React.FC = () => {
   const { currentUser } = useAppContext();
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>('');
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +37,8 @@ export const Chat: React.FC = () => {
       const { data, error } = await supabase
         .from('users')
         .select('id, name, email')
-        .neq('id', currentUser?.id || '');
+        .neq('id', currentUser?.id || '')
+        .order('name', { ascending: true });
       
       if (error) throw error;
       setUsers(data || []);
@@ -57,14 +73,28 @@ export const Chat: React.FC = () => {
     }
   };
 
-  // Send new message with recipient validation
+  // Send new message with optimistic updates
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedUser || !currentUser?.id) return;
     
+    const optimisticId = `optimistic-${Date.now()}`;
+    const optimisticMessage: Message = {
+      id: optimisticId,
+      user_id: currentUser.id,
+      recipient_id: selectedUser,
+      message: newMessage.trim(),
+      created_at: new Date().toISOString(),
+      status: 'sending'
+    };
+
     try {
       setError(null);
       
-      // 1. Verify recipient exists in database
+      // 1. Optimistically update UI
+      setMessages(prev => [...prev, optimisticMessage]);
+      setNewMessage('');
+
+      // 2. Verify recipient exists
       const { count, error: recipientError } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true })
@@ -74,35 +104,44 @@ export const Chat: React.FC = () => {
         throw new Error('Recipient user does not exist');
       }
 
-      // 2. Send the message
-      const { error } = await supabase
+      // 3. Send message to server
+      const { data, error } = await supabase
         .from('chat_messages')
         .insert({
           user_id: currentUser.id,
           recipient_id: selectedUser,
           message: newMessage.trim()
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
-      
-      setNewMessage('');
+
+      // 4. Replace optimistic message with server response
+      setMessages(prev => prev.map(msg => 
+        msg.id === optimisticId ? { ...data, status: 'delivered' } : msg
+      ));
+
     } catch (error) {
       console.error('Error sending message:', error);
+      // 5. Handle error - mark as failed and keep in UI
+      setMessages(prev => prev.map(msg => 
+        msg.id === optimisticId ? { ...msg, status: 'failed' } : msg
+      ));
       setError(error instanceof Error ? error.message : 'Failed to send message');
       
-      // Refresh users list if recipient was invalid
       if (error instanceof Error && error.message.includes('Recipient')) {
         loadUsers();
       }
     }
   };
 
-  // Set up real-time subscription
+  // Real-time subscription for instant updates
   useEffect(() => {
     if (!selectedUser || !currentUser?.id) return;
 
     const channel = supabase
-      .channel('chat_updates')
+      .channel('instant_chat')
       .on(
         'postgres_changes',
         {
@@ -112,7 +151,14 @@ export const Chat: React.FC = () => {
           filter: `or(and(user_id.eq.${currentUser.id},recipient_id.eq.${selectedUser}),and(user_id.eq.${selectedUser},recipient_id.eq.${currentUser.id})`
         },
         (payload) => {
-          setMessages(prev => [...prev, payload.new]);
+          // Ignore our own optimistic messages
+          if (payload.new.id?.toString().startsWith('optimistic-')) return;
+          
+          setMessages(prev => {
+            // Prevent duplicates
+            const exists = prev.some(msg => msg.id === payload.new.id);
+            return exists ? prev : [...prev, payload.new];
+          });
         }
       )
       .subscribe();
@@ -194,14 +240,23 @@ export const Chat: React.FC = () => {
                       key={message.id} 
                       className={`flex ${message.user_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                      <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg relative ${
                         message.user_id === currentUser?.id 
                           ? 'bg-blue-500 text-white' 
                           : 'bg-gray-200 text-gray-800'
+                      } ${
+                        message.status === 'sending' ? 'opacity-80' : ''
                       }`}>
+                        {message.status === 'sending' && (
+                          <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                        )}
+                        {message.status === 'failed' && (
+                          <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500"></div>
+                        )}
                         <p className="text-sm">{message.message}</p>
                         <p className="text-xs opacity-75 mt-1">
                           {new Date(message.created_at).toLocaleTimeString()}
+                          {message.status === 'failed' && ' (Failed)'}
                         </p>
                       </div>
                     </div>
@@ -218,7 +273,11 @@ export const Chat: React.FC = () => {
               placeholder="Type your message..."
               onKeyPress={handleKeyPress}
             />
-            <Button onClick={sendMessage} disabled={!newMessage.trim()}>
+            <Button 
+              onClick={sendMessage} 
+              disabled={!newMessage.trim()}
+              className="min-w-[40px]"
+            >
               <Send className="h-4 w-4" />
             </Button>
           </div>
