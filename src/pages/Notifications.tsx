@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/lib/auth';
 import { databaseService } from '@/lib/database';
 import { NotificationSender } from '@/components/notifications/NotificationSender';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Notification {
   id: string;
@@ -24,6 +25,7 @@ export const Notifications: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+<<<<<<< HEAD
   useEffect(() => {
     getCurrentUser();
   }, []);
@@ -44,19 +46,67 @@ export const Notifications: React.FC = () => {
 
   const loadNotifications = async () => {
     try {
+=======
+  // Memoized function to load notifications
+  const loadNotifications = useCallback(async () => {
+    try {
+      if (!currentUser?.user_id) return;
+      
+      setRefreshing(true);
+>>>>>>> parent of df66f2b (stats profile supaerbase)
       const notifs = await databaseService.getNotifications(currentUser.id);
       setNotifications(notifs);
     } catch (error) {
       console.error('Error loading notifications:', error);
+<<<<<<< HEAD
+=======
+      toast({
+        title: 'Error',
+        description: 'Failed to load notifications',
+        variant: 'destructive'
+      });
+>>>>>>> parent of df66f2b (stats profile supaerbase)
     } finally {
       setLoading(false);
     }
   };
 
+<<<<<<< HEAD
   const markAsRead = async (notificationId: string) => {
     try {
       await databaseService.markNotificationRead(currentUser.id, notificationId);
       loadNotifications();
+=======
+  // Initialize current user and load notifications
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        const user = authService.getCurrentUser();
+        if (user) {
+          const profile = await databaseService.getUserProfile(user.user_id);
+          setCurrentUser({ ...user, profile });
+        }
+      } catch (error) {
+        console.error('Error initializing user:', error);
+        setLoading(false);
+      }
+    };
+
+    initialize();
+  }, []);
+
+  // Load notifications when currentUser changes
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
+
+  const markAsRead = async (notificationId: string) => {
+    try {
+      await databaseService.markNotificationRead(currentUser.id, notificationId);
+      setNotifications(prev => prev.map(n => 
+        n.id === notificationId ? { ...n, is_read: true } : n
+      ));
+>>>>>>> parent of df66f2b (stats profile supaerbase)
     } catch (error) {
       toast({
         title: 'Error',
@@ -66,6 +116,27 @@ export const Notifications: React.FC = () => {
     }
   };
 
+<<<<<<< HEAD
+=======
+  const deleteNotification = async (notificationId: string) => {
+    try {
+      await databaseService.deleteNotification(currentUser.id, notificationId);
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      toast({
+        title: 'Success',
+        description: 'Notification deleted',
+        variant: 'default'
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete notification',
+        variant: 'destructive'
+      });
+    }
+  };
+
+>>>>>>> parent of df66f2b (stats profile supaerbase)
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'success': return 'bg-green-100 text-green-800';
@@ -79,29 +150,66 @@ export const Notifications: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-4 lg:p-6 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading notifications...</p>
+      <div className="p-4 lg:p-6 space-y-6">
+        <div className="flex items-center space-x-3 mb-6">
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <Skeleton className="h-8 w-48" />
         </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="p-4 lg:p-6 space-y-6">
+<<<<<<< HEAD
       <div className="flex items-center space-x-3 mb-6">
         <Bell className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600" />
         <h1 className="text-xl lg:text-3xl font-bold">Notifications</h1>
+=======
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <Bell className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600" />
+          <h1 className="text-xl lg:text-3xl font-bold">Notifications</h1>
+          <Badge variant="outline" className="ml-2">
+            {notifications.filter(n => !n.is_read).length} unread
+          </Badge>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={loadNotifications}
+          disabled={refreshing}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+>>>>>>> parent of df66f2b (stats profile supaerbase)
       </div>
 
       {isAdmin && (
-        <NotificationSender currentUser={currentUser} />
+        <NotificationSender currentUser={currentUser} onSend={loadNotifications} />
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle>Your Notifications</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Your Notification(s)</CardTitle>
+            <div className="text-sm text-muted-foreground">
+              {notifications.length} total
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-96">
@@ -141,6 +249,17 @@ export const Notifications: React.FC = () => {
                           <Check className="h-4 w-4" />
                         </Button>
                       )}
+<<<<<<< HEAD
+=======
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deleteNotification(notification.id)}
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+>>>>>>> parent of df66f2b (stats profile supaerbase)
                     </div>
                   </div>
                 </div>
@@ -149,6 +268,18 @@ export const Notifications: React.FC = () => {
                 <div className="text-center py-8 text-muted-foreground">
                   <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No notifications yet</p>
+<<<<<<< HEAD
+=======
+                  <Button 
+                    variant="ghost" 
+                    className="mt-4"
+                    onClick={loadNotifications}
+                    disabled={refreshing}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                    Check for new notifications
+                  </Button>
+>>>>>>> parent of df66f2b (stats profile supaerbase)
                 </div>
               )}
             </div>
