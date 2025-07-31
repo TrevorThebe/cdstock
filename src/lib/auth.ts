@@ -9,7 +9,7 @@ export const authService = {
       password
     });
     if (error) throw error;
-    
+
     if (data.user) {
       // Get user from users table
       const { data: userRecord, error: userError } = await supabase
@@ -17,9 +17,9 @@ export const authService = {
         .select('*')
         .eq('email', data.user.email)
         .single();
-      
+
       if (userError) throw userError;
-      
+
       const user: User = {
         id: data.user.id,
         email: data.user.email || '',
@@ -27,8 +27,8 @@ export const authService = {
         phone: userRecord?.phone || '',
         role: userRecord?.role || 'normal',
         isBlocked: userRecord?.is_blocked || false,
-        createdAt: userRecord?.created_at || data.user.created_at || new Date().toISOString(),
-        updatedAt: userRecord?.updated_at || new Date().toISOString()
+        createdAt: data.user.created_at,
+        updatedAt: new Date().toISOString()
       };
       storage.setCurrentUser(user);
       return user;
@@ -47,7 +47,7 @@ export const authService = {
       }
     });
     if (error) throw error;
-    
+
     if (data.user) {
       // Insert into users table
       const { error: insertError } = await supabase.from('users').insert({
@@ -58,9 +58,9 @@ export const authService = {
         role: 'normal',
         is_blocked: false
       });
-      
+
       if (insertError) throw insertError;
-      
+
       const user: User = {
         id: data.user.id,
         email: data.user.email || '',
@@ -68,7 +68,7 @@ export const authService = {
         phone: phone || '',
         role: 'normal',
         isBlocked: false,
-        createdAt: data.user.created_at || new Date().toISOString(),
+        createdAt: data.user.created_at,
         updatedAt: new Date().toISOString()
       };
       storage.setCurrentUser(user);
@@ -92,9 +92,9 @@ export const authService = {
       .select('*')
       .eq('id', userId)
       .single();
-    
+
     if (error) throw error;
-    
+
     const user: User = {
       id: data.id,
       email: data.email,
@@ -102,10 +102,10 @@ export const authService = {
       phone: data.phone || '',
       role: data.role,
       isBlocked: data.is_blocked,
-      createdAt: data.created_at || new Date().toISOString(),
-      updatedAt: data.updated_at || new Date().toISOString()
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
     };
-    
+
     storage.setCurrentUser(user);
     return user;
   }
