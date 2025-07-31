@@ -51,7 +51,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
               required
-              placeholder="admin@cdstock.com"
+              placeholder="user@cdstock.com"
             />
           </div>
           <div>
