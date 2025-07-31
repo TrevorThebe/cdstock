@@ -3,12 +3,14 @@ import { storage } from './storage';
 import { User } from '@/types';
 
 export const authService = {
-  async login(email: string, password: string) {
+  async login(email: string, password: string): Promise<User> {
     try {
+      // Try Supabase auth first
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
+
       if (error) throw error;
       
       if (data.user) {
@@ -20,7 +22,7 @@ export const authService = {
         
         const user: User = {
           id: data.user.id,
-          email: data.user.email || '',
+          email: data.user.email || email,
           name: profile?.name || data.user.user_metadata?.name || 'User',
           phone: profile?.phone || '',
           role: profile?.role || 'normal',
@@ -28,38 +30,35 @@ export const authService = {
           createdAt: data.user.created_at,
           updatedAt: new Date().toISOString()
         };
+        
         storage.setCurrentUser(user);
         return user;
       }
     } catch (error) {
-      // Fallback to localStorage for predefined users
+      // Fallback to localStorage users
       const users = storage.getUsers();
-      let user = users.find(u => u.email === email);
+      const user = users.find(u => u.email === email);
       
-      // Check password for predefined users
       if (user && (
         (email === 'strevor@uwiniwin.co.za' && password === 'trevor') ||
-        (email === 'cosmodumpling1@gmail.com' && password === 'petunia') ||
-        u.id === password // Legacy fallback
+        (email === 'cosmodumpling1@gmail.com' && password === 'petunia')
       )) {
         storage.setCurrentUser(user);
         return user;
       }
       throw new Error('Invalid credentials');
     }
+    throw new Error('Login failed');
   },
 
-  async register(email: string, password: string, name: string, phone?: string) {
+  async register(email: string, password: string, name: string, phone?: string): Promise<User> {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            name: name
-          }
-        }
+        options: { data: { name } }
       });
+
       if (error) throw error;
       
       if (data.user) {
@@ -72,7 +71,7 @@ export const authService = {
         
         const user: User = {
           id: data.user.id,
-          email: data.user.email || '',
+          email: data.user.email || email,
           name,
           phone: phone || '',
           role: 'normal',
@@ -80,35 +79,38 @@ export const authService = {
           createdAt: data.user.created_at,
           updatedAt: new Date().toISOString()
         };
+        
         storage.setCurrentUser(user);
         return user;
       }
     } catch (error) {
       // Fallback to localStorage
-      const users = storage.getUsers();
       const newUser: User = {
         id: Math.random().toString(36).substr(2, 9),
         email,
         name,
-        phone,
+        phone: phone || '',
         role: 'normal',
         isBlocked: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
+      
+      const users = storage.getUsers();
       users.push(newUser);
       storage.saveUsers(users);
       storage.setCurrentUser(newUser);
       return newUser;
     }
+    throw new Error('Registration failed');
   },
 
   getCurrentUser(): User | null {
     return storage.getCurrentUser();
   },
 
-  async logout() {
+  async logout(): Promise<void> {
     await supabase.auth.signOut();
-    storage.setCurrentUser(null);
+    storage.clearCurrentUser();
   }
 };
