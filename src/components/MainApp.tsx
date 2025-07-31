@@ -126,8 +126,8 @@ export const MainApp: React.FC = () => {
         return <Restaurant />;
       case 'bakery':
         return <Bakery />;
-      /*case 'chat':
-        return <Chat />;*/
+      case 'chat':
+        return <Chat />;
       case 'user-management':
         return (currentUser.role === 'admin' || currentUser.role === 'super') ?
           <UserManagement /> : <Dashboard />;
