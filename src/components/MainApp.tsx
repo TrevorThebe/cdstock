@@ -39,7 +39,7 @@ export const MainApp: React.FC = () => {
     if (users.length === 0) {
       const adminUser: User = {
         id: uuidv4(),
-        email: 'user@cdstock.com',
+        email: 'admin@cdstock.com',
         name: 'Admin User',
         phone: '+1234567890',
         role: 'super',
@@ -126,8 +126,8 @@ export const MainApp: React.FC = () => {
         return <Restaurant />;
       case 'bakery':
         return <Bakery />;
-      case 'chat':
-        return <Chat />;
+      /*case 'chat':
+        return <Chat />;*/
       case 'user-management':
         return (currentUser.role === 'admin' || currentUser.role === 'super') ?
           <UserManagement /> : <Dashboard />;
