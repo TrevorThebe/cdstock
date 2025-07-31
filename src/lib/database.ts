@@ -102,7 +102,7 @@ export const databaseService = {
     await supabase
       .from('read_notifications')
       .delete()
-      .match({ user_id: userId, notification_id: notificationId });
+      .match({ user_id: userId, notification_id: notificationId });//changed notification_id to id
 
     const { error } = await supabase
       .from('notifications')
