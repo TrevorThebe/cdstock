@@ -53,7 +53,7 @@ export const authService = {
     if (data.user) {
       // Get user from users table
       const { data: userRecord, error: userError } = await supabase
-        .from('users')
+        .from('users_on')
         .select('*')
         .eq('email', data.user.email)
         .single();
@@ -90,7 +90,7 @@ export const authService = {
     
     if (data.user) {
       // Insert into users table
-      const { error: insertError } = await supabase.from('users').insert({
+      const { error: insertError } = await supabase.from('users_on').insert({
         id: data.user.id,
         email: data.user.email,
         name,
@@ -128,7 +128,7 @@ export const authService = {
 
   async refreshUserData(userId: string) {
     const { data, error } = await supabase
-      .from('users')
+      .from('users_on')
       .select('*')
       .eq('id', userId)
       .single();
